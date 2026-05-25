@@ -13,7 +13,7 @@ source("core/setup.R")
 tar_option_set(
   packages = c(
     "tidyverse", "arrow", "microdatasus", "geobr", "sf", 
-    "janitor", "pointblank", "qs", "lubridate", "duckdb", "dbplyr"
+    "janitor", "pointblank", "lubridate", "duckdb", "dbplyr"
   ),
   format = "parquet"
 )
@@ -40,7 +40,7 @@ list(
   # 1. Extrao (Usando arquivo local como ponto de partida)
   tar_target(
     transito_raw_path,
-    "data/raw/transito/sim_do_v_2022.parquet",
+    here::here("data/raw/transito/sim_do_v_2022.parquet"),
     format = "file"
   ),
   
@@ -53,7 +53,7 @@ list(
   tar_target(
     transito_gold,
     # Em vez de ler tudo para o R, usamos o DuckDB para agregar
-    summarize_mortality_db("data/raw/transito/*.parquet") %>%
+    summarize_mortality_db(here::here("data/raw/transito/*.parquet")) %>%
       standardize_race_groups(col = "raca_cor") %>% 
       left_join(pop_base, by = c("code_uf", "raca_cor_agreg", "ano")) %>%
       mutate(taxa_mortalidade = (total_obitos / populacao) * 100000)
@@ -63,6 +63,6 @@ list(
   tar_target(
     transito_val,
     validate_gold_mortality(transito_gold),
-    format = "qs" # Pointblank agents salvos em formato serializado
+    format = "rds" # Mudado de qs para rds para evitar erro de pacote
   )
 )
