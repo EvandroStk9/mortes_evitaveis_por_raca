@@ -52,8 +52,8 @@ list(
   # 2. Tratamento e Agregao via DuckDB
   tar_target(
     transito_gold,
-    # Em vez de ler tudo para o R, usamos o DuckDB para agregar
-    summarize_mortality_db(here::here("data/raw/transito/*.parquet")) %>%
+    # L apenas arquivos sim_do_v_*.parquet para no dar erro de schema com pop/lookup
+    summarize_mortality_db(here::here("data/raw/transito/sim_do_v_*.parquet")) %>%
       standardize_race_groups(col = "raca_cor") %>% 
       left_join(pop_base, by = c("code_uf", "raca_cor_agreg", "ano")) %>%
       mutate(taxa_mortalidade = (total_obitos / populacao) * 100000)
