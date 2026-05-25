@@ -1,6 +1,6 @@
 # apps/plataforma_monitoramento/R/mod_indicadores.R
 
-# UI do Módulo
+# UI do Mdulo
 mod_indicadores_ui <- function(id) {
   ns <- NS(id)
   tagList(
@@ -21,15 +21,21 @@ mod_indicadores_ui <- function(id) {
   )
 }
 
-# Server do Módulo
+# Server do Mdulo
 mod_indicadores_server <- function(id, data_target) {
   moduleServer(id, function(input, output, session) {
     
     # Reativo para filtrar dados
     df_filtrado <- reactive({
       res <- data_target()
+      
+      # Se a tabela for vazia ou no tiver a coluna, retorna como est
+      if (nrow(res) == 0 || !"raca_cor_ibge" %in% names(res)) {
+        return(res)
+      }
+      
       if (input$select_raca != "Todas") {
-        res <- res %>% filter(raca_cor == input$select_raca)
+        res <- res %>% filter(raca_cor_ibge == input$select_raca)
       }
       res
     })
