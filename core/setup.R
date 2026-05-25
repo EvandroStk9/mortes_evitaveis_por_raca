@@ -1,5 +1,5 @@
 # core/setup.R
-# Configuraes globais da plataforma
+# Configurações globais da plataforma
 
 # Pacotes base
 suppressPackageStartupMessages({
@@ -8,7 +8,7 @@ suppressPackageStartupMessages({
   library(here)
 })
 
-# Paleta Institucional (Pode ser expandida para cada mdulo)
+# Paleta Institucional (Pode ser expandida para cada módulo)
 paleta_cebrap <- list(
   primaria = "#1B4F72",
   secundaria = "#2874A6",
@@ -31,9 +31,14 @@ tema_plataforma <- function() {
 
 theme_set(tema_plataforma())
 
-# Utilitrios de Path
+# Utilitários de Caminho (Paths)
 path_raw <- function(...) here::here("data", "raw", ...)
 path_staging <- function(...) here::here("data", "staging", ...)
 path_gold <- function(...) here::here("data", "gold", ...)
 
-message("Core setup finalizado.")
+# Garante existência de diretórios base
+dir.create(here::here("data/raw"), recursive = TRUE, showWarnings = FALSE)
+dir.create(here::here("data/staging"), recursive = TRUE, showWarnings = FALSE)
+dir.create(here::here("data/gold"), recursive = TRUE, showWarnings = FALSE)
+
+message("Core setup finalizado com sucesso.")

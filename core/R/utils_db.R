@@ -1,41 +1,40 @@
 # core/R/utils_db.R
-# Integrao com Parquet e DuckDB para Alta Performance
+# Integração com Parquet e DuckDB para Alta Performance
 
 library(duckdb)
 library(dbplyr)
 
-#' Cria uma conexo efmera ou persistente com DuckDB
+#' Cria uma conexão efêmera ou persistente com DuckDB
 get_db_con <- function(db_path = ":memory:") {
   dbConnect(duckdb(), dbdir = db_path)
 }
 
-#' L arquivos Parquet usando DuckDB sem carregar na RAM do R
+#' Lê arquivos Parquet usando DuckDB sem carregar na RAM do R
 open_parquet_db <- function(path, con = get_db_con()) {
   tbl(con, sprintf("read_parquet('%s')", path))
 }
 
-#' Exemplo de agregao pesada via DuckDB
+#' Exemplo de agregação pesada via DuckDB
 summarize_mortality_db <- function(parquet_path) {
   con <- get_db_con()
   
-  # O processamento ocorre no DuckDB. 
-  # Inspecionamos e vimos que as colunas so 'cod_mun_res' e 'racacor' (se existir)
+  # O processamento ocorre no DuckDB.
   raw_tbl <- open_parquet_db(parquet_path, con) %>%
     janitor::clean_names()
   
-  # Verifica colunas disponveis
+  # Verifica colunas disponíveis
   cols <- colnames(raw_tbl)
   
-  # Mapeia colunas (Lgica de segurana)
+  # Mapeia colunas (Lógica de segurança)
   muni_col <- if ("cod_mun_res" %in% cols) "cod_mun_res" else if ("codmunres" %in% cols) "codmunres" else cols[1]
   race_col <- if ("racacor" %in% cols) "racacor" else if ("raca_cor" %in% cols) "raca_cor" else NULL
   
-  # Construo da query
+  # Construção da query
   query <- raw_tbl %>%
     mutate(code_uf = substr(as.character(!!sym(muni_col)), 1, 2))
     
   if (is.null(race_col)) {
-    # Se no tem raa no arquivo, assume 9 (Ignorado) para manter o pipeline rodando
+    # Se não tem raça no arquivo, assume 9 (Ignorado)
     query <- query %>% mutate(racacor = 9)
     race_col <- "racacor"
   }

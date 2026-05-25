@@ -1,33 +1,43 @@
-# Mortes Evitveis por Raa
+# Mortes Evitáveis por Raça
 
-Plataforma modular de monitoramento de mortes evitveis e desigualdades raciais no Brasil.
+Plataforma modular de monitoramento de mortes evitáveis e desigualdades raciais no Brasil.
 
-## Estrutura do Repositrio
+## Como configurar o ambiente (Qualquer Máquina)
 
-- `core/`: Funes compartilhadas, configuraes globais e metadados base.
-- `data/`: Data Lakehouse local baseado em Parquet.
-    - `raw/`: Dados brutos (imutveis).
-    - `staging/`: Dados limpos e padronizados.
-    - `gold/`: Produtos analticos finais.
-- `modules/`: Módulos temáticos (COVID, Trnsito, Homicdios, etc).
-- `apps/`: Dashboards Shiny para visualizao pblica.
-- `docs/`: Documentao metodolgica (Quarto).
-- `tests/`: Bateria de testes de integridade e qualidade de dados.
+1.  **Requisitos:** Ter o R (>= 4.1) e o RStudio instalados.
+2.  **Clone o Repositório:**
+    ```bash
+    git clone https://github.com/EvandroStk9/mortes_evitaveis_por_raca.git
+    cd mortes_evitaveis_por_raca
+    ```
+3.  **Instale as Dependências:**
+    Abra o RStudio no arquivo `mortes_evitaveis_por_raca.Rproj` e execute:
+    ```r
+    source("install_deps.R")
+    ```
+4.  **Organize os Dados:**
+    Certifique-se de que os arquivos `.parquet` do projeto de Trânsito estão em:
+    `data/raw/transito/sim_do_v_*.parquet`
 
-## Como Executar
+## Como Executar o Pipeline
 
-Este projeto utiliza o framework `{targets}` para gerenciar o pipeline de dados.
+O pipeline gerencia automaticamente a ordem de execução e o cache dos dados.
 
-1. Abra o projeto no RStudio.
-2. Certifique-se de que as dependncias esto instaladas (ver `core/setup.R`).
-3. No console do R, execute:
-   ```r
-   targets::tar_make()
-   ```
+```r
+targets::tar_make()
+```
 
-## Princpios de Engenharia de Dados
+## Como Visualizar os Resultados
 
-1. **Reprodutibilidade:** Todo o processamento  codificado e versionado.
-2. **Modularidade:** Novos temas podem ser adicionados sem quebrar os existentes.
-3. **Escalabilidade:** Uso de Parquet e DuckDB para lidar com grandes volumes de dados (SIM).
-4. **Governança:** Metadados claros e validao de dados em todas as etapas.
+Para abrir o Dashboard interativo:
+```r
+shiny::runApp('apps/plataforma_monitoramento')
+```
+
+## Estrutura Técnica
+
+-   **Backend:** R + {targets} + DuckDB (Processamento de alta performance).
+-   **Armazenamento:** Arquivos Parquet (Compactos e rápidos).
+-   **Frontend:** Shiny Dashboard modular.
+-   **Documentação:** Quarto (.qmd).
+-   **Padrões:** UTF-8 para garantir acentuação correta em Português.

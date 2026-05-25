@@ -1,21 +1,21 @@
 # core/R/standards_race.R
-# Protocolo Institucional para Dados de Raa/Cor
+# Protocolo Institucional para Dados de Raça/Cor
 
-#' Padronizao Categrica IBGE
-#' Define os labels oficiais e a ordem dos fatores para visualizao
+#' Padronização Categórica IBGE
+#' Define os labels oficiais e a ordem dos fatores para visualização
 get_race_labels <- function() {
   c(
     "1" = "Branca",
     "2" = "Preta",
     "3" = "Amarela",
     "4" = "Parda",
-    "5" = "Indgena",
+    "5" = "Indígena",
     "9" = "Ignorado"
   )
 }
 
-#' Protocolo de Agregao para Anlise de Desigualdade
-#' @description Conforme o Estatuto da Igualdade Racial e prticas do IBGE/IPEA
+#' Protocolo de Agregação para Análise de Desigualdade
+#' @description Conforme o Estatuto da Igualdade Racial e práticas do IBGE/IPEA
 standardize_race_groups <- function(data, col = "racacor") {
   data %>%
     mutate(
@@ -23,18 +23,18 @@ standardize_race_groups <- function(data, col = "racacor") {
       raca_cor_agreg = case_when(
         raca_cor_ibge %in% c("Preta", "Parda") ~ "Negra",
         raca_cor_ibge == "Branca" ~ "Branca",
-        raca_cor_ibge == "Indgena" ~ "Indgena",
+        raca_cor_ibge == "Indígena" ~ "Indígena",
         raca_cor_ibge == "Amarela" ~ "Amarela",
         TRUE ~ "Ignorado/NI"
       ),
-      # Fator ordenado para garantir que 'Branca' seja a categoria de referncia em modelos
-      raca_cor_agreg = factor(raca_cor_agreg, levels = c("Branca", "Negra", "Indgena", "Amarela", "Ignorado/NI"))
+      # Fator ordenado para garantir que 'Branca' seja a categoria de referência
+      raca_cor_agreg = factor(raca_cor_agreg, levels = c("Branca", "Negra", "Indígena", "Amarela", "Ignorado/NI"))
     )
 }
 
-#' Clculo de Indicadores de Disparidade Racial
-#' @param data_gold Dataframe agregado com taxas por raa
-#' @param ref_group Grupo de referncia (default "Branca")
+#' Cálculo de Indicadores de Disparidade Racial
+#' @param data_gold Dataframe agregado com taxas por raça
+#' @param ref_group Grupo de referência (default "Branca")
 calculate_race_disparity <- function(data_gold, ref_group = "Branca") {
   
   # Calcula Rate Ratio (RR) e Rate Difference (RD)
@@ -50,28 +50,9 @@ calculate_race_disparity <- function(data_gold, ref_group = "Branca") {
       rate_ratio = taxa_mortalidade / ref_taxa,
       rate_difference = taxa_mortalidade - ref_taxa,
       disparidade_interpretacao = case_when(
-        rate_ratio > 1.1 ~ paste0("Sobremortalidade em relao a ", ref_group),
-        rate_ratio < 0.9 ~ paste0("Submortalidade em relao a ", ref_group),
-        TRUE ~ "Equilbrio"
+        rate_ratio > 1.1 ~ paste0("Sobremortalidade em relação a ", ref_group),
+        rate_ratio < 0.9 ~ paste0("Submortalidade em relação a ", ref_group),
+        TRUE ~ "Equilíbrio"
       )
     )
-}
-
-#' Protocolo para Dados Faltantes (Missing Data)
-#' @description Define como lidar com a categoria 'Ignorado'
-handle_race_missing <- function(data, method = c("exclude", "keep", "redistribute")) {
-  method <- match.arg(method)
-  
-  if (method == "exclude") {
-    return(data %>% filter(raca_cor_ibge != "Ignorado"))
-  }
-  
-  if (method == "redistribute") {
-    # Aqui entraria uma lgica de imputao ou redistribuio proporcional
-    # til para quando o % de ignorados  alto e enviesa a taxa
-    message("Aviso: Mtodo de redistribuio ainda no implementado.")
-    return(data)
-  }
-  
-  return(data)
 }

@@ -1,16 +1,16 @@
 # apps/plataforma_monitoramento/R/mod_indicadores.R
 
-# UI do Mdulo
+# UI do Módulo
 mod_indicadores_ui <- function(id) {
   ns <- NS(id)
   tagList(
     fluidRow(
       box(width = 3, title = "Filtros", status = "primary", solidHeader = TRUE,
-          selectInput(ns("select_raca"), "Raa/Cor:", 
-                      choices = c("Todas", "Branca", "Preta", "Parda", "Amarela", "Indgena")),
+          selectInput(ns("select_raca"), "Raça/Cor:", 
+                      choices = c("Todas", "Branca", "Preta", "Parda", "Amarela", "Indígena")),
           selectInput(ns("select_uf"), "Estado:", choices = NULL)
       ),
-      box(width = 9, title = "Tendncia Temporal", status = "info", solidHeader = TRUE,
+      box(width = 9, title = "Tendência Temporal", status = "info", solidHeader = TRUE,
           plotOutput(ns("plot_tendencia"))
       )
     ),
@@ -21,7 +21,7 @@ mod_indicadores_ui <- function(id) {
   )
 }
 
-# Server do Mdulo
+# Server do Módulo
 mod_indicadores_server <- function(id, data_target) {
   moduleServer(id, function(input, output, session) {
     
@@ -29,7 +29,6 @@ mod_indicadores_server <- function(id, data_target) {
     df_filtrado <- reactive({
       res <- data_target()
       
-      # Se a tabela for vazia ou no tiver a coluna, retorna como est
       if (nrow(res) == 0 || !"raca_cor_ibge" %in% names(res)) {
         return(res)
       }
@@ -47,8 +46,8 @@ mod_indicadores_server <- function(id, data_target) {
         ggplot(aes(x = ano, y = taxa_mortalidade, color = raca_cor_agreg)) +
         geom_line(linewidth = 1.2) +
         geom_point() +
-        labs(title = "Evoluo da Taxa por 100k Habitantes",
-             x = "Ano", y = "Taxa", color = "Raa/Cor") +
+        labs(title = "Evolução da Taxa por 100k Habitantes",
+             x = "Ano", y = "Taxa", color = "Raça/Cor") +
         tema_plataforma()
     })
     
