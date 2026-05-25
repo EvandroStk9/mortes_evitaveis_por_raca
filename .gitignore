@@ -1,0 +1,28 @@
+# R
+.Rhistory
+.RData
+.Ruserdata
+.Rproj.user/
+.Rapp.history
+.DS_Store
+
+# Targets
+_targets/
+_targets.RData
+
+# Dados (Segurana e Performance)
+data/raw/
+data/staging/
+data/gold/
+*.parquet
+*.csv
+*.xlsx
+*.dbc
+
+# Outputs
+outputs/
+_docs_render/
+
+# Pacotes
+renv/
+library/

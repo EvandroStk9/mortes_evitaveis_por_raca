@@ -1,0 +1,812 @@
+---
+title: "Mortes por Covid 19 na PEA por ocupação - análise exploratória"
+author: "Por Alexandre Nogueira e Evandro Luis"
+date: "2023-05-05"
+output:
+  html_document:
+    df_print: paged
+    toc: yes
+    toc_float: yes
+    theme: cerulean
+    highlight: zenburn
+    number_sections: yes
+  word_document:
+    toc: yes
+  pdf_document:
+    toc: yes
+---
+
+```{r setup, include=FALSE}
+# teste
+library("pacman")
+p_load(tidyverse, data.table, here, fs, 
+       lubridate, sf, arrow, tidylog, openxlsx,
+       geobr, gt, ggrepel, ggthemes, knitr, plotly)
+
+knitr::opts_chunk$set(
+	echo = FALSE,
+	fig.dim = c(16, 12),
+	fig.retina = 2,
+	message = FALSE,
+	warning = FALSE,
+	out.width = "100%",
+	tidy = TRUE)
+
+# Pacotes não abertos pelo pacman
+library(gt)
+library(fs)
+
+#
+options(scipen=999)
+```
+
+```{r}
+# Abrindo bases de dados:
+sim <- arrow::read_parquet(
+  here("data", "sim", "sim.parquet")
+)
+
+#
+pea_sim <- sim %>%
+  filter(PEA == 1)
+
+# Tipologia para agregação de CBO's
+tipologia_cbo <- read.xlsx(here("data", "cbo", 
+                                "tipologia_cbo.xlsx"))
+```
+
+```{r}
+# Número de mortes na cbo 4 agregada por especialista:
+pea_cbo_4_agreg_2020 <- pea_sim %>%
+  filter(ANO == 2020) %>%
+  group_by(id_cbo_4_agreg, cbo_4_agreg) %>%
+  summarize(obitos_cbo_4 = n_distinct(id_obito)) %>%
+  ungroup() %>%
+  arrange(desc(obitos_cbo_4)) 
+
+#
+pea_cbo_4_agreg_2021 <- pea_sim %>%
+  filter(ANO == 2021) %>%
+  group_by(id_cbo_4_agreg, cbo_4_agreg) %>%
+  summarize(obitos_cbo_4 = n_distinct(id_obito)) %>%
+  ungroup() %>%
+  arrange(desc(obitos_cbo_4))
+
+#
+pea_cbo_4_agreg <- pea_sim %>%
+  group_by(id_cbo_4_agreg, cbo_4_agreg) %>%
+  summarize(obitos_cbo_4 = n_distinct(id_obito)) %>%
+  ungroup() %>%
+  arrange(desc(obitos_cbo_4))
+
+```
+
+```{r}
+# Síntese com a proporção de obitos covid por ocup_4_agreg
+sint_covid_pea_cbo_4_agreg <- pea_sim %>%
+  filter(COVID == 1) %>%
+  mutate(n_row = nrow(.)) %>%
+  group_by(id_cbo_4_agreg, cbo_4_agreg, grupo, hierarquia) %>%
+  summarize(obitos_covid = n_distinct(id_obito),
+            idade_media_cbo_4 = mean(IDADE),
+            prop_obitos_covid = obitos_covid / first(n_row)) %>%
+  ungroup() %>%
+  left_join(pea_cbo_4_agreg, by = c("id_cbo_4_agreg", "cbo_4_agreg")) %>%
+  mutate(obitos_covid_cada_100_cbo_4_agreg = (obitos_covid / obitos_cbo_4) * 100) %>%
+  filter(obitos_cbo_4 > 50)
+
+# Síntese ano 2020
+sint_covid_pea_cbo_4_agreg_2020 <- pea_sim %>%
+  filter(ANO == 2020) %>%
+  filter(COVID == 1) %>%
+  mutate(n_row = nrow(.)) %>%
+  group_by(id_cbo_4_agreg, cbo_4_agreg, grupo, hierarquia) %>%
+  summarize(obitos_covid = n_distinct(id_obito),
+            idade_media_cbo_4 = mean(IDADE),
+            prop_obitos_covid = obitos_covid / first(n_row)) %>%
+  ungroup() %>%
+  left_join(pea_cbo_4_agreg_2020, by = c("id_cbo_4_agreg", "cbo_4_agreg")) %>%
+  mutate(obitos_covid_cada_100_cbo_4_agreg_2020 = (obitos_covid / obitos_cbo_4) * 100) %>%
+  filter(obitos_cbo_4 > 50)
+
+# 4.2 Síntese ano 2021:
+sint_covid_pea_cbo_4_agreg_2021 <- pea_sim %>%
+  filter(ANO == 2021) %>%
+  filter(COVID == 1) %>%
+  mutate(n_row = nrow(.)) %>%
+  group_by(id_cbo_4_agreg, cbo_4_agreg, grupo, hierarquia) %>%
+  summarize(obitos_covid = n_distinct(id_obito),
+            idade_media_cbo_4 = mean(IDADE),
+            prop_obitos_covid = obitos_covid / first(n_row)) %>%
+  ungroup() %>%
+  left_join(pea_cbo_4_agreg_2021, by = c("id_cbo_4_agreg", "cbo_4_agreg")) %>%
+  mutate(obitos_covid_cada_100_cbo_4_agreg_2021 = (obitos_covid / obitos_cbo_4) * 100) %>%
+  filter(obitos_cbo_4 > 50)
+
+# 4.3 - Calculando aumento percentual:
+sint_covid_pea_cbo_4_agreg_comparacao <- sint_covid_pea_cbo_4_agreg_2020 %>%
+  bind_cols(sint_covid_pea_cbo_4_agreg_2021) %>%
+  mutate(aumento_percentual = (obitos_covid_cada_100_cbo_4_agreg_2021 - obitos_covid_cada_100_cbo_4_agreg_2020) / obitos_covid_cada_100_cbo_4_agreg_2020)
+
+```
+
+```{r}
+#
+pea_grupo_2020 <-pea_sim %>%
+  filter(ANO == 2020) %>%
+  group_by(grupo, hierarquia) %>%
+  summarize(obitos_grupo = n_distinct(id_obito)) %>%
+  ungroup() %>%
+  arrange(desc(obitos_grupo))
+
+#
+pea_grupo_2021 <- pea_sim %>%
+  filter(ANO == 2021) %>%
+  group_by(grupo, hierarquia) %>%
+  summarize(obitos_grupo = n_distinct(id_obito)) %>%
+  ungroup() %>%
+  arrange(desc(obitos_grupo))
+
+#
+pea_grupo <- pea_sim %>%
+  group_by(grupo, hierarquia) %>%
+  summarize(obitos_grupo = n_distinct(id_obito)) %>%
+  ungroup() %>%
+  arrange(desc(obitos_grupo))
+```
+
+```{r}
+# 5 - Síntese com a proporção de obitos covid por grupo ajustado:
+sint_covid_pea_grupo <- pea_sim %>%
+  filter(COVID == 1) %>%
+  mutate(n_row = nrow(.)) %>%
+  group_by(grupo, hierarquia) %>%
+  summarize(obitos_covid = n_distinct(id_obito),
+            idade_media_grupo = mean(IDADE),
+            prop_obitos_covid = obitos_covid / first(n_row)) %>%
+  ungroup() %>%
+  left_join(pea_grupo, by = c("grupo", "hierarquia")) %>%
+  mutate(obitos_covid_cada_100_grupo = (obitos_covid / obitos_grupo) * 100) %>%
+  filter(obitos_grupo > 50)
+
+# 5.1 - Síntese para 2020
+sint_covid_pea_grupo_2020 <- pea_sim %>%
+  filter(ANO == 2020) %>%
+  filter(COVID == 1) %>%
+  mutate(n_row = nrow(.)) %>%
+  group_by(grupo, hierarquia) %>%
+  summarize(obitos_covid = n_distinct(id_obito),
+            idade_media_grupo = mean(IDADE),
+            prop_obitos_covid = obitos_covid / first(n_row)) %>%
+  ungroup() %>%
+  left_join(pea_grupo_2020, by = c("grupo", "hierarquia")) %>%
+  mutate(obitos_covid_cada_100_grupo_2020 = (obitos_covid / obitos_grupo) * 100) %>%
+  filter(obitos_grupo > 50)
+
+# 5.2 - Síntese para 2021
+sint_covid_pea_grupo_2021 <- pea_sim %>%
+  filter(ANO == 2021) %>%
+  filter(COVID == 1) %>%
+  mutate(n_row = nrow(.)) %>%
+  group_by(grupo, hierarquia) %>%
+  summarize(obitos_covid = n_distinct(id_obito),
+            idade_media_grupo = mean(IDADE),
+            prop_obitos_covid = obitos_covid / first(n_row)) %>%
+  ungroup() %>%
+  left_join(pea_grupo_2021, by = c("grupo", "hierarquia")) %>%
+  mutate(obitos_covid_cada_100_grupo_2021 = (obitos_covid / obitos_grupo) * 100) %>%
+  filter(obitos_grupo > 50)
+
+# 5.3 - Comparando crescimento mortalidade covid entre anos:
+sint_covid_pea_grupo_comparacao <- sint_covid_pea_grupo_2020 %>%
+  bind_cols(sint_covid_pea_grupo_2021) %>%
+  mutate(
+    aumento_percentual = (obitos_covid_cada_100_grupo_2021 -
+                            obitos_covid_cada_100_grupo_2020) /
+      obitos_covid_cada_100_grupo_2020)
+
+```
+
+```{r}
+#
+top_10_covid_pea <- sint_covid_pea_cbo_4_agreg %>%
+  top_n(10, obitos_covid) %>%
+  arrange(desc(obitos_covid))
+
+#
+top_10_covid_pea_cada_100 <- sint_covid_pea_cbo_4_agreg %>%
+  top_n(10, obitos_covid_cada_100_cbo_4_agreg) %>%
+  arrange(desc(obitos_covid_cada_100_cbo_4_agreg))
+
+```
+
+```{r}
+## Síntese: óbitos pea e covid por centralidade urbana
+sint_rm <- pea_sim %>%
+  filter(COVID == 1) %>%
+  filter(!is.na(metro)) %>%
+  group_by(cbo_4_agreg, metro) %>%
+  summarize(obitos_covid = n_distinct(id_obito)) %>%
+  left_join(pea_cbo_4_agreg, by = "cbo_4_agreg") %>%
+  rowwise() %>%
+  mutate(obitos_covid_cada_100_cbo_4 = obitos_covid / obitos_cbo_4 * 100) %>%
+  ungroup() %>%
+  filter(!is.na(cbo_4_agreg) & obitos_cbo_4 > 50)
+
+
+##
+sint_regioes <- pea_sim %>%
+  filter(COVID == 1) %>%
+  filter(!is.na(name_region)) %>%
+  group_by(cbo_4_agreg, name_region) %>%
+  summarize(obitos_covid = n_distinct(id_obito)) %>%
+  left_join(pea_cbo_4_agreg, by = "cbo_4_agreg") %>%
+  rowwise() %>%
+  mutate(obitos_covid_cada_100_cbo_4 = obitos_covid / obitos_cbo_4 * 100) %>%
+  ungroup() %>%
+  filter(!is.na(cbo_4_agreg) & obitos_cbo_4 > 50)
+```
+
+# Introdução
+
+Objetivo é analisar óbitos PEA por Covid-19 por perfil ocupacional e por marcadores sociais de diferença.
+
+Marcadores sociais selecionados para análise: raça, idade, sexo, raça/cor e sexo e região.
+
+## Visão geral
+
+### Resumo dos bancos de dados
+
+Para fazer as análises, empilhamos as bases do SIM de 2020 e 2021, resultando numa base com um total de 3.428.763 óbitos. O número de óbitos por covid nessa base é igual a 630.065.
+
+```{r}
+sim %>%
+  group_by(COVID) %>%
+  summarise(n = n()) %>%
+  gt() %>%
+  tab_options(table.width = pct(100))
+```
+
+Dentro desse universo de 3.428.763 óbitos, realizamos alguns filtros: 
+
+-   Como temos interesse na variável "ocupação (no mercado de trabalho)", trabalhamos com as informações da ocupação da pessoa que morreu, com idade entre 18 e 65 anos. e seus diferenciais por raça e gênerodeixamos no banco apenas aqueles casos que estão na **PEA (População Economicamente Ativa)**, ou seja, aqueles de pessoas entre 18 e 65 anos de idade. Restando somando um total de 1.370.778 óbitos. 
+
+-   Em seguida, retiramos do banco todos os casos que estavam com "**Inativo**", **missing** ou "**Ignorado**" na variável "Ocupação". Mais especificamente na ocupação de 4 dígitos segundo a CBO - Código Brasileiro de Ocupações. Restando 676.485 óbitos, o que equivale a 19.76% dos casos do banco original (SIM 2020-2021).
+
+O banco usado nas análises a seguir contém, portanto, 676.485 casos. Dentro desses 676.485 óbitos, um total de **147.920** são de **óbitos por covid-19**. 
+
+```{r}
+pea_sim %>%
+  group_by(COVID) %>%
+  summarise(n = n()) %>%
+  gt() %>%
+  tab_options(table.width = pct(100))
+```
+
+Abaixo temos uma tabela com um resumo dos missings nas principais variáveis do banco do SIM (2020 e 2021):
+
+```{r}
+# Resumindo missing em sim:
+sim %>%
+  summarize(across(c(SEXO, RACACOR, IDADE, id_cbo_6), ~ list(n = sum(!is.na(.)),
+                                        n_distinct = n_distinct(.),
+                                        Missing = sum(is.na(.)),
+                                        Missing_prop = round(mean(is.na(.)), 2))),
+            Stat = c("N", "N_distinct", "Missing", "Missing_prop")) %>%
+  select(Stat, everything()) %>%
+  gt() %>%
+  tab_options(
+    table.width = pct(100)
+  ) %>%
+  tab_header(
+    title = md("Resumo dos missings nas principais variáveis do banco SIM (2020 e 2021)"))
+```
+
+E aqui temos um resumo semelhante, porém com os dados do banco PEA SIM (2020 e 2021), o SIM filtrado pela PEA.
+
+```{r}
+# Resumindo missing em pea_sim:
+pea_sim %>%
+  summarize(across(c(SEXO, RACACOR, IDADE, id_cbo_6), ~ list(n = sum(!is.na(.)),
+                                        n_distinct = n_distinct(.),
+                                        Missing = sum(is.na(.)),
+                                        Missing_prop = round(mean(is.na(.)), 2))),
+            Stat = c("N", "N_distinct", "Missing", "Missing_prop")) %>%
+  select(Stat, everything()) %>%
+  gt() %>%
+  tab_options(
+    table.width = pct(100)
+  ) %>%
+  tab_header(
+    title = md("Resumo dos missings nas principais variáveis do banco SIM PEA (2020 e 2021)"))
+
+```
+
+#### PEA SIM - óbitos por raça/cor e sexo
+
+Ao analisar tanto óbitos por covid quanto não-covid, por raça/cor, vemos que pretos ou pardos correspondem a 61.8% do total de mortes na PEA:
+
+```{r}
+# 1. Óbitos por cor
+pea_sim %>%
+  group_by(RACACOR) %>%
+  summarize(n = n(),
+            prop = n() / n_distinct(pea_sim$id_obito)) %>%
+  ungroup() %>%
+  arrange(desc(n)) %>%
+  gt() %>%  
+  tab_options(table.width = pct(100)) # Tem 1.5% de NA em raça
+
+```
+
+Já quando olhamos apenas para as mortes por covid na PEA, pretos e pardos correspondem a 47.63% do total, um número menor do que se olhamos para todos os tipos de mortes.
+
+```{r}
+#
+pea_sim %>%
+  filter(COVID == 1) %>%
+  group_by(RACACOR) %>%
+  summarize(
+    n = n(),
+    prop = n() / n_distinct(pea_sim[which(COVID == 1)]$id_obito)) %>%
+  ungroup() %>%
+  arrange(desc(n)) %>%
+  gt() %>%
+  tab_options(table.width = pct(100)) # Tem 2.9% de NA em raça
+
+```
+
+Ao olharmos para a variável sexo dentro dos grupos raciais vemos que homens sempre morrem mais que mulheres.
+
+```{r}
+# 3. óbitos por covid por raça e sexo:
+pea_sim %>%
+  filter(COVID == 1) %>%
+  group_by(SEXO, RACACOR) %>%
+  summarize(obitos = n_distinct(id_obito)) %>%
+  ungroup() %>%
+  ggplot(aes(obitos, fct_reorder(RACACOR, desc(obitos)), fill = SEXO)) +
+  geom_col(colour = "black") +
+  labs(title = "Óbitos por covid - PEA",
+       x = "",
+       y = "",
+       caption = "Fonte: SIM/DATASUS, 2020",) +
+  theme_fivethirtyeight(base_size = 24) +
+  theme(#plot.title = element_text(size=10, face = "bold"),
+    # legend.position = "bottom",
+    legend.title = element_blank())
+```
+
+Dentro da PEA, o percentual de óbitos por covid de pessoas identificadas como do sexo masculino é de 71.91%, contra 29.61% de mulheres.
+
+```{r}
+#
+pea_sim %>%
+  filter(COVID == 1) %>%
+  group_by(SEXO) %>%
+  summarize(
+    n = n(),
+    prop = n() / n_distinct(pea_sim[which(COVID == 1)]$id_obito)) %>%
+  ungroup() %>%
+  arrange(desc(n)) %>%
+  gt() %>%
+  tab_options(table.width = pct(100))
+```
+
+# Análise por variáveis de interesse
+
+## Ocupação
+
+### % de óbitos PEA Covid por grupo ocupacional vs n° de Óbitos PEA do grupo ocupacional
+
+Analisamos o número absoluto de mortes por covid-19 e a proporção de mortes por covid dentro do total de mortes registrados em cada grupo ocupacional. 
+
+O gráfico abaixo apresenta: i) quais ocupações morrem mais em geral (tamanho dos círculos)? ii) Quais ocupações tiveram mais mortes em números absolutos por Covid-19 (eixo X, na horizontal)? Qual a proporção das mortes por Covid-19 em relação ao total de mortes (mortes evitáveis, eixo Y).  Quanto mais à direita, maior o número absoluto de mortes por Covid-19. Quanto mais acima, mais o Covid-19 afetou o grupo ocupacional proporcionalmente. Quanto maior o círculo, mais a ocupação morre de uma maneira geral.
+
+```{r}
+# 3. Gráfico de dispersão grupo: % Óbitos covid na categoria vs óbitos na categoria
+sint_covid_pea_grupo %>%
+  filter(!is.na(grupo)) %>%
+  mutate(classif = case_when(obitos_covid_cada_100_grupo < 20 ~ "Menos que 10%",
+                             obitos_covid_cada_100_grupo >= 20 &
+                               obitos_covid_cada_100_grupo < 30 ~ "Entre 10% e 20%",
+                             obitos_covid_cada_100_grupo >= 30 ~ "Mais que 20%")) %>%
+  ggplot(aes(obitos_covid, obitos_covid_cada_100_grupo),
+         size = obitos_grupo, label = grupo) +
+  geom_point(aes(colour = factor(classif), size = obitos_grupo), alpha = .5) +
+  # geom_jitter(aes(colour = factor(grupo), size = obitos_grupo), alpha = .5) +
+  # geom_text_repel(aes(label = grupo), size = 6) +
+  #geom_text(aes(label = grupo), size = 6) +
+  scale_size(range = c(3, 45), name="Total de óbitos") +
+  geom_label_repel(
+    aes(label = paste0(grupo, " ~ ", round(obitos_covid_cada_100_grupo), "%")), size = 6,
+    fontface = "bold") +
+  # scale_x_continuous(breaks = seq(10, 50, 5)) +
+  # scale_y_continuous(limits = c(-.05, .45), labels = percent) +
+  scale_y_continuous(limits = c(-2, 60), labels = function(x) paste0(x, "%")) + # x*100
+  labs(caption = "Fonte: SIM/DATASUS, 2020-2021",
+       y = "% óbitos Covid-19 no grupo ocupacional",
+       x = "N° óbitos Covid-19 no grupo ocupacional") +
+  theme_fivethirtyeight(base_size = 24) +
+  theme(legend.position = "none")
+```
+
+Em números absolutos, o grupo ocupacional com o maior número de mortes por covid foi o de Comércio e Serviços (26.857), seguido pelos grupos de Transporte (14.105), 'Agricultura e Pesca' (13.603), 'Diretores e Dirigentes' (12.198) e Serviços Pessoais (10.177).
+
+Já quando olhamos para o percentual de mortes por covid em relação a todas as mortes ocorridas no grupo ocupacional no período, vemos que o grupo das ocupações ligadas à religião foi aquele com o maior percentual de mortes por covid (58.46%). No Boletim 34 esse também havia sido o grupo com percentual de mortes por covid. Em seguida vem o grupo dos Profissionais de nível ensino superior (36.69%), que engloba ocupações como advogados, engenheiros, arquitetos, economistas e assistentes sociais. Depois vem os grupos de profissionais da Segurança (35.69%), de profissionais das Artes e Cultura (35.67%) e o grupo de profissionais Diretores e Dirigentes (35.29%). O grupo de profissionais da Educação aparece em 6° lugar, com 32.36% de mortes por covid. 
+
+### Mudanças do percentual de mortes ao longo do tempo
+
+Comparando os dados de 2020 com os de 2021, percebemos algumas mudanças interessantes. A tabela abaixo permite ver melhor essas mudanças ocorridas. 
+
+Em todos os grupos ocupacionais houve aumento entre 2020 e 2021 no percentual de mortes por covid em relação a todas as mortes ocorridas. Os maiores aumentos foram nos grupos Agricultura e pesca (157%), Indústria de Transformação, manutenção e reparação (153%), e Educação (150%). Em seguida vem Técnicos (142%), Serviços Domésticos (140%) e Alojamento e Alimentação (135%) . Todos esses grupos, com exceção dos trabalhadores da Educação, são formados por trabalhadores menos qualificados. Esses aumentos mostram que essas são categorias que provavelmente se expuseram mais ao vírus em 2021 do que em 2020, quando comparadas a outras categorias profissionais. Os trabalhadores da Educação podem ter sido mais expostos devido ao movimento pela abertura das escolas e volta às aulas. Nos demais grupos a exposição ao vírus pode ter sido maior em 2022 porque se trata de categorias em que os trabalhadores têm menos recursos para se manterem em isolamento por um tempo muito longo. A necessidade da renda do trabalho pode ter forçado esses trabalhadores a se exporem mais ao vírus à medida que a pandemia se desenrolou. São hipóteses para se testar.
+
+O grupo onde houve menos aumento no percentual de mortes por covid entre 2020 e 2021 foi o de profissionais da Saúde, o que é curioso, dado o contexto em que trabalha esses profissionais. Provavelmente, à medida que a pandemia foi se desenrolando, esses profissionais aprenderam a lidar melhor com a exposição e os riscos do vírus. Outros dois grupos que tiveram percentuais de morte por covid altos em 2020 mas que também tiveram um aumento menor dos percentuais em 2021 foram Religião e Segurança. O mesmo processo de aprendizado pode ter ocorrido nesses grupos. Mas essa é uma hipótese para ser testada.
+
+```{r}
+# Calculando indicadores:
+sintese_covid_pea_grupo <- pea_sim %>%
+  group_by(grupo, hierarquia) %>%
+  summarize(obitos_covid_2020 = sum(COVID==1 & ANO==2020),
+            obitos_covid_2021 = sum(COVID==1 & ANO==2021),
+            obitos_covid_total = sum(COVID==1),
+            obitos_total_2020 = sum(ANO==2020),
+            obitos_total_2021 = sum(ANO==2021),
+            obitos_covid_cada_100_grupo_2020 = obitos_covid_2020/obitos_total_2020,
+            obitos_covid_cada_100_grupo_2021 = obitos_covid_2021/obitos_total_2021) %>%
+  mutate(aumento_percentual = (obitos_covid_cada_100_grupo_2021 - obitos_covid_cada_100_grupo_2020) / obitos_covid_cada_100_grupo_2020,
+         obitos_covid_cada_100_grupo_2021 = round(obitos_covid_cada_100_grupo_2021, 2),
+         obitos_covid_cada_100_grupo_2020 = round(obitos_covid_cada_100_grupo_2020, 2)) %>%
+  arrange(desc(aumento_percentual)) %>% 
+  mutate(aumento_percentual = round(aumento_percentual*100, 1),
+         aumento_percentual = paste(aumento_percentual, "%"),
+         grupo = ifelse(is.na(grupo), "Missings", grupo)) %>%
+  select("grupo", obitos_covid_total, obitos_covid_cada_100_grupo_2020, obitos_covid_cada_100_grupo_2021, aumento_percentual) %>%
+  rename("Grupo ocupacional"="grupo",
+         "N° óbitos covid"=obitos_covid_total,
+         "% mortes por covid em 2020"=obitos_covid_cada_100_grupo_2020,
+         "% mortes por covid em 2021"=obitos_covid_cada_100_grupo_2021,
+         "Aumento percentual entre 2020 e 2021"=aumento_percentual) %>%
+  column_to_rownames(var="Grupo ocupacional")
+
+
+# Fazendo tabela plotly:
+plot_ly(
+  type = 'table',
+  header = list(
+    values = c("<b>Grupo Ocupacional</b>", names(sintese_covid_pea_grupo)),
+  align = c('left', rep('center', ncol(sintese_covid_pea_grupo))),
+  line = list(width = 1, color = 'black'),
+  fill = list(color = 'rgb(95, 176, 163)'),
+  align = c('left','center'),
+  height = 40,
+  font = list(family = "Arial", size = 14, color = "white")
+  ),
+  cells = list(
+    values = rbind(
+      rownames(sintese_covid_pea_grupo), 
+      t(as.matrix(unname(sintese_covid_pea_grupo)))
+    ),
+    align = c('left', rep('center', ncol(sintese_covid_pea_grupo))),
+    line = list(color = "black", width = 1),
+    fill = list(color = c('rgb(107, 229, 209)', 'rgba(228, 222, 249, 0.65)')),
+    align = c('left','center'),
+    height = 30,
+    font = list(family = "Arial", size = 12, color = c("black"))
+  ))
+```
+
+## Idade
+
+### Óbitos por Covid por faixa etária
+
+Em termos de faixa etária, as mortes por covid se concentram na população em idade ativa (18 a 65 anos) - 41.8% - e entre aqueles com 65 ou mais - 57.9%.
+
+```{r}
+# Resumo de número de mortes segundo faixa etária
+sim %>%
+  group_by(COVID) %>%
+  summarise(total = n(),
+            prop_menos_18 = round(sum(IDADE < 18, na.rm = TRUE)/ total, 3),
+            prop_18_a_64anos = round(sum(IDADE >= 18 & IDADE < 65, na.rm = TRUE)/total, 3),
+            prop_mais_64 = round(sum(IDADE >= 65, na.rm = TRUE)/total, 3),
+            prop_missing = round(sum(is.na(IDADE))/total, 3)) %>% 
+  gt() %>%
+  tab_options(table.width = pct(100)) %>%
+  tab_header(
+    title = md("Proporção de mortes por faixa etária - SIM (2020 e 2021)"))
+```
+
+### Óbitos, idade e raça/cor:
+
+Ao cruzar a variával idade com raça/cor percebemos que não existe interação entre as variáveis (para o banco SIM PEA). Todos os grupos de raça/cor possuem uma idade mediana do óbito semelhante. Essa informação mostra que não é necessário usar termos de interação entre essas variáveis no modelo de regressão.
+
+```{r}
+dataMedian <- pea_sim %>%
+  filter(IDADE <= 110) %>%
+  filter(COVID==1) %>%
+  group_by(RACACOR) %>%
+  summarise(MD = median(IDADE))
+
+pea_sim %>%
+  filter(IDADE <= 110) %>%
+  filter(COVID==1) %>%
+  ggplot(aes(x=RACACOR, y=IDADE, fill=RACACOR)) +
+  geom_boxplot() + 
+    geom_text(data = dataMedian, aes(RACACOR, MD, label = MD), 
+              position = position_dodge(width = 0.8), size = 3, vjust = 1) +
+  guides(fill=guide_legend(title="Raça/cor")) +
+  theme(axis.text.x=element_blank())
+```
+
+## Raça/cor
+
+### Analisando óbitos covid e não-covid dentro de cada categoria de raça/cor
+
+```{r}
+# 1. Óbitos dentro das categorias de raça/cor:
+pea_sim %>%
+  group_by(RACACOR) %>%
+  summarize(Total = n(),
+            perc_covid = sum(COVID==1)/n(),
+            perc_nao_covid = sum(COVID==0)/n()) %>%
+  mutate(perc_covid = paste(round(perc_covid*100, 2), "%"),
+         perc_nao_covid = paste(round(perc_nao_covid*100, 2), "%")) %>%
+  arrange(desc(Total)) %>%
+  gt() %>%  
+  tab_options(table.width = pct(100)) # Tem 1.5% de NA em raça
+```
+
+```{r}
+p <- pea_sim %>%
+  mutate(COVID = ifelse(COVID==1, "Covid", "Não Covid")) %>%
+  group_by(RACACOR, COVID, ANO) %>%
+  summarise(count = n()) %>%
+  ggplot(aes(RACACOR, count, fill = COVID)) +
+  geom_bar(position = "fill",stat = "identity") +
+  scale_y_continuous(labels = scales::percent) + 
+  labs(y = "Percentual") +
+  facet_grid(vars(ANO))
+
+ggplotly(p)
+```
+
+### Analisando apenas óbitos por covid e raça/cor
+
+```{r}
+
+```
+
+### Tabela
+
+```{r}
+# óbitos covid:
+obitos_grupo_covid <- pea_sim %>%
+  filter(ANO==2020) %>%
+  filter(COVID==1) %>%
+  group_by(grupo) %>%
+  summarise(total = n(),
+            n_pretos_pardos = sum(RACACOR=="Preto ou pardo", na.rm = TRUE),
+            n_brancos_amarelos = sum(RACACOR=="Branco ou Amarelo", na.rm = TRUE),
+            n_indigenas = sum(RACACOR=="Indigena", na.rm = TRUE),
+            n_missing = sum(is.na(RACACOR)),
+            perc_pretos_pardos = n_pretos_pardos/total,
+            perc_brancos_amarelos = n_brancos_amarelos/total,
+            perc_indigenas = n_indigenas/total) %>%
+  select(grupo, perc_pretos_pardos, perc_brancos_amarelos, perc_indigenas) %>%
+  arrange(desc(perc_pretos_pardos))
+
+
+# óbitos não covid:
+obitos_grupo_nao_covid <- pea_sim %>%
+    filter(ANO==2020) %>%
+  filter(COVID==0) %>%
+  group_by(grupo) %>%
+  summarise(total = n(),
+            n_pretos_pardos = sum(RACACOR=="Preto ou pardo", na.rm = TRUE),
+            n_brancos_amarelos = sum(RACACOR=="Branco ou Amarelo", na.rm = TRUE),
+            n_indigenas = sum(RACACOR=="Indigena", na.rm = TRUE),
+            n_missing = sum(is.na(RACACOR)),
+            perc_pretos_pardos = n_pretos_pardos/total,
+            perc_brancos_amarelos = n_brancos_amarelos/total,
+            perc_indigenas = n_indigenas/total) %>%
+  select(grupo, perc_pretos_pardos, perc_brancos_amarelos, perc_indigenas) %>%
+  arrange(desc(perc_pretos_pardos)) 
+
+obitos_grupo_covid %>%
+  left_join(obitos_grupo_nao_covid, by=c("grupo")) %>%
+  select(grupo, perc_pretos_pardos.x, perc_pretos_pardos.y) %>%
+  gt() %>%
+  tab_options(table.width = pct(100)) %>%
+  tab_header(
+    title = md("Comparação ocupações com maior proporção de óbitos por covid e não-covid de pessoas pretas ou pardas (SIM PEA 2020-2021"))
+```
+
+```{r}
+# óbitos covid:
+obitos_grupo_covid <- pea_sim %>%
+  filter(ANO==2021) %>%
+  filter(COVID==1) %>%
+  group_by(grupo) %>%
+  summarise(total = n(),
+            n_pretos_pardos = sum(RACACOR=="Preto ou pardo", na.rm = TRUE),
+            n_brancos_amarelos = sum(RACACOR=="Branco ou Amarelo", na.rm = TRUE),
+            n_indigenas = sum(RACACOR=="Indigena", na.rm = TRUE),
+            n_missing = sum(is.na(RACACOR)),
+            perc_pretos_pardos = n_pretos_pardos/total,
+            perc_brancos_amarelos = n_brancos_amarelos/total,
+            perc_indigenas = n_indigenas/total) %>%
+  select(grupo, perc_pretos_pardos, perc_brancos_amarelos, perc_indigenas) %>%
+  arrange(desc(perc_pretos_pardos))
+
+
+# óbitos não covid:
+obitos_grupo_nao_covid <- pea_sim %>%
+    filter(ANO==2021) %>%
+  filter(COVID==0) %>%
+  group_by(grupo) %>%
+  summarise(total = n(),
+            n_pretos_pardos = sum(RACACOR=="Preto ou pardo", na.rm = TRUE),
+            n_brancos_amarelos = sum(RACACOR=="Branco ou Amarelo", na.rm = TRUE),
+            n_indigenas = sum(RACACOR=="Indigena", na.rm = TRUE),
+            n_missing = sum(is.na(RACACOR)),
+            perc_pretos_pardos = n_pretos_pardos/total,
+            perc_brancos_amarelos = n_brancos_amarelos/total,
+            perc_indigenas = n_indigenas/total) %>%
+  select(grupo, perc_pretos_pardos, perc_brancos_amarelos, perc_indigenas) %>%
+  arrange(desc(perc_pretos_pardos)) 
+
+obitos_grupo_covid %>%
+  left_join(obitos_grupo_nao_covid, by=c("grupo")) %>%
+  select(grupo, perc_pretos_pardos.x, perc_pretos_pardos.y) %>%
+  gt() %>%
+  tab_options(table.width = pct(100)) %>%
+  tab_header(
+    title = md("Comparação ocupações com maior proporção de óbitos por covid e não-covid de pessoas pretas ou pardas (SIM PEA 2020-2021")) 
+
+```
+
+### Densidade
+
+```{r}
+## Densidade (escala logarítimica)
+# sint_cor %>%
+#   filter(RACACOR != "Indigena") %>%
+#   ggplot(aes(log(obitos_covid_cada_100_cbo_4_cor), fill = RACACOR)) +
+#   geom_density(alpha = .3) +
+#   theme_bw() +
+#   theme(legend.position = "bottom", legend.title = element_blank()) +
+#   labs(x = "Óbitos covid a cada 100 da mesma cor na categoria (log)",
+#        caption = "* Ocupações com pelo menos 50 óbitos")
+```
+
+### Histograma + densidade
+
+```{r}
+## Histogramas de densidade
+# sint_cor %>%
+#   filter(RACACOR != "Indigena") %>%
+#   ggplot(aes(log(obitos_covid_cada_100_cbo_4_cor))) +
+#   geom_histogram(aes(y = ..density..), bins = 30, alpha = .7) +
+#   geom_density(aes(y = ..density..), alpha = .3) +
+#   theme_bw() +
+#   facet_wrap(~ RACACOR) +
+#   labs(x = "Óbitos covid a cada 100 da mesma cor na categoria",
+#        caption = "* Ocupações com pelo menos 50 óbitos")
+```
+
+## Sexo
+
+### Tabela
+
+```{r}
+## 
+# sint_sexo <- pea_sim_2020 %>%
+#   filter(COVID == 1) %>%
+#   group_by(id_cbo_4, cbo_4, SEXO) %>%
+#   summarize(obitos_covid = n_distinct(id_obito)) %>%
+#   ungroup() %>%
+#   left_join(pea_cbo_4_sexo, by = c("id_cbo_4", "cbo_4", "SEXO")) %>%
+#   rowwise() %>%
+#   mutate(obitos_covid_cada_100_cbo_4_sexo = obitos_covid / obitos_cbo_4_sexo * 100) %>%
+#   ungroup() %>%
+#   filter(!is.na(cbo_4) & obitos_cbo_4_sexo > 50)
+```
+
+### Boxplot
+
+```{r}
+##
+# sint_sexo %>%
+#   ggplot(aes(obitos_covid_cada_100_cbo_4_sexo, fill = SEXO)) +
+#   geom_boxplot() +
+#   theme_bw() +
+#   theme(legend.position = "bottom", legend.title = element_blank()) +
+#   labs(x = "Óbitos covid a cada 100 do mesmo sexo na categoria",
+#        caption = "* Ocupações com pelo menos 50 óbitos")
+
+```
+
+## Raça/cor e Sexo
+
+### Tabela
+
+```{r}
+# # (6) Síntese: óbitos pea e covid por cbo_4, sexo e cor
+# pea_sim_2020 %>%
+#   filter(COVID == 1) %>%
+#   filter(!is.na(RACACOR)) %>%
+#   group_by(id_cbo_4, cbo_4, SEXO, RACACOR) %>%
+#   summarize(obitos_covid = n_distinct(id_obito)) %>%
+#   ungroup() %>%
+#   left_join(pea_cbo_4_sexo_cor,
+#             by = c("id_cbo_4", "cbo_4", "SEXO", "RACACOR")) %>%
+#   rowwise() %>%
+#   mutate(obitos_covid_cada_100_cbo_4_sexo_cor = obitos_covid / obitos_cbo_4_sexo_cor * 100) %>%
+#   ungroup() %>%
+#   filter(!is.na(cbo_4) & obitos_cbo_4_sexo_cor > 50)
+```
+
+### Boxplots
+
+```{r}
+## Boxplots
+# sint_sexo_cor %>%
+#   filter(RACACOR != "Indigena") %>%
+#   ggplot(aes(obitos_covid_cada_100_cbo_4_sexo_cor)) +
+#   geom_boxplot() +
+#   facet_grid(SEXO ~ RACACOR) +
+#   theme_bw() +
+#   labs(x = "Óbitos covid a cada 100 da mesma cor e do mesmo sexo na categoria",
+#        caption = "* Ocupações com pelo menos 50 óbitos")
+
+```
+
+### Histograma + densidade
+
+```{r}
+
+## Histogramas de densidade
+# sint_sexo_cor %>%
+#   filter(RACACOR != "Indigena") %>%
+#   # ggplot(aes(log(obitos_covid_cada_100_cbo_4_sexo_cor), fill = RACACOR)) +
+#   ggplot(aes(obitos_covid_cada_100_cbo_4_sexo_cor, fill = RACACOR)) +
+#   geom_density(alpha = .3) +
+#   theme_bw() +
+#   facet_wrap(~ SEXO) +
+#   theme(legend.position = "bottom", legend.title = element_blank()) +
+#   labs(x = "Óbitos covid a cada 100 da mesma cor e do mesmo sexo na categoria",
+#        # x = "Óbitos covid a cada 100 da mesma cor e do mesmo sexo na categoria (log)",
+#        caption = "* Ocupações com pelo menos 50 óbitos")
+
+```
+
+## Geografia
+
+### Grandes regiões
+
+```{r}
+##
+sint_regioes %>%
+  ggplot(aes(obitos_covid_cada_100_cbo_4)) +
+  geom_histogram(aes(y = ..density..), alpha = .7) +
+  geom_density(alpha = .3) +
+  facet_wrap(~ name_region) +
+  theme_fivethirtyeight(base_size = 24)
+```
+
+### Metropolitano
+
+```{r}
+# (7) Covid: dinâmica regional e urbana
+
+## Densidades
+sint_rm %>%
+  ggplot(aes(obitos_covid_cada_100_cbo_4, fill = metro)) +
+  geom_density(alpha = .3) +
+  theme_fivethirtyeight(base_size = 24) +
+  theme(
+    legend.position = "bottom", 
+    legend.title = element_blank())
+
+```

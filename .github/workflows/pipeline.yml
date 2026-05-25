@@ -1,0 +1,30 @@
+name: Data Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  schedule:
+    - cron: '0 0 * * 1' # Roda toda segunda-feira
+
+jobs:
+  run-pipeline:
+    runs-on: ubuntu-latest
+    container: rocker/geospatial:latest
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Install dependencies
+        run: |
+          R -e "install.packages(c('targets', 'tarchetypes', 'arrow', 'microdatasus', 'lubridate'))"
+          
+      - name: Run Update Watchdog
+        run: |
+          R -e "source('core/R/utils_update.R'); auto_update_pipeline()"
+        env:
+          DATASUS_FTP_PASS: ${{ secrets.DATASUS_FTP_PASS }}
+          
+      - name: Sync to Cloud Storage (AWS S3)
+        if: success()
+        run: |
+          aws s3 sync data/gold s3://meu-projeto-cebrap/gold-data/ --acl public-read
