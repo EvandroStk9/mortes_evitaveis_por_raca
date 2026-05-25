@@ -1,14 +1,20 @@
 # main.R
-# Script de entrada para a plataforma
+# Ponto de entrada unificado para o projeto
 
-# 1. Carregar ambiente
-source("core/setup.R")
+# 1. Instalação e carregamento de dependências
+source("install_deps.R")
+library(targets)
+library(tidyverse)
 
-# 2. Executar Pipeline
-message("Iniciando pipeline de dados...")
-targets::tar_make()
+# 2. Execução do pipeline
+message("Iniciando processamento de dados...")
+tryCatch({
+  tar_make()
+  message("Pipeline executado com sucesso!")
+}, error = function(e) {
+  message("Erro no pipeline: ", e$message)
+})
 
-# 3. Gerar Documentao (opcional)
-# quarto::quarto_render("docs/metodologia.qmd")
-
-message("Processamento completo.")
+# 3. Inicialização do Dashboard
+message("Abrindo Dashboard...")
+shiny::runApp('apps/plataforma_monitoramento')
