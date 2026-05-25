@@ -13,7 +13,6 @@ tar_option_set(
 )
 
 list(
-  # Dados de metadados
   tar_target(mun_br_meta, {
     geobr::read_municipality(year = 2022) %>% 
       janitor::clean_names() %>% 
@@ -22,20 +21,19 @@ list(
       distinct()
   }),
   
-  # Dados de população (Base de referência)
   tar_target(pop_base, get_pop_ibge(years = 2010:2024)),
   
-  # Dados de Trânsito
   tar_target(transito_gold, {
-    # Garante que os dados existem antes de processar
     files <- list.files(here::here("data/raw/transito"), pattern = "sim_do_v_*.parquet", full.names = TRUE)
-    stopifnot(length(files) > 0)
     
-    summarize_mortality_db(files) %>%
+    res <- summarize_mortality_db(files) %>%
       standardize_race_groups(col = "raca_cor") %>% 
       left_join(mun_br_meta, by = "code_uf") %>%
       mutate(ano_num = as.numeric(substr(ano_trimestre, 1, 4))) %>%
       left_join(pop_base, by = c("code_uf", "raca_cor_agreg", "ano_num" = "ano")) %>%
       mutate(taxa_mortalidade = (total_obitos / populacao) * 100000)
+    
+    arrow::write_parquet(res, here::here("data/gold/transito_gold.parquet"))
+    res
   })
 )
