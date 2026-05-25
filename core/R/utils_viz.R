@@ -1,107 +1,69 @@
 # core/R/utils_viz.R
-# Funções de visualização padronizadas (Fidelidade aos originais)
+# Motor de Visualização Institucional - CEBRAP
 
 library(ggplot2)
 library(scales)
 library(ggtext)
 library(showtext)
-library(ggthemes)
 
-# Configuração de Fontes (UTF-8 garantido)
-try({
-  sysfonts::font_add_google("Roboto", "Roboto")
-  showtext_auto()
-}, silent = TRUE)
-
-# Cores Institucionais
-cores_maio <- list(
-  amarelo        = "#FFCF00",
-  amarelo_escuro = "#E8B400",
-  cinza_escuro   = "grey10",
-  cinza_medio    = "grey40",
-  cinza_claro    = "grey80",
-  vermelho       = "firebrick3"
-)
-
-# Tema Original Maio Amarelo
-tema_original <- function(base_size = 11) {
-  theme_minimal(base_size = base_size) +
-    theme(
-      plot.title.position = "plot",
-      plot.title = element_text(face = "bold", size = 20, hjust = 0.5),
-      plot.subtitle = element_text(size = 15, hjust = 0.5, lineheight = 0.75),
-      legend.position = "top",
-      strip.text = element_text(face = "bold", size = 14),
-      axis.text.y = element_text(size = 12, color = "black"),
-      axis.text.x = element_text(size = 12, color = "black"),
-      axis.title = element_text(size = 12),
-      plot.caption = element_text(size = 10, hjust = 0),
-      panel.grid.minor = element_blank()
+# Identidade Visual CEBRAP (Definida no core/setup.R)
+# Cores para Raça/Cor padronizadas
+get_cebrap_color_scale <- function() {
+  scale_color_manual(
+    values = c(
+      "Branca"      = "#2874A6",
+      "Negra"       = "#D4AC0D",
+      "Indígena"    = "#1B4F72",
+      "Amarela"     = "#7F8C8D",
+      "Ignorado/NI" = "#ABB2B9"
     )
+  )
 }
 
-# Tema Original COVID (Baseado no FiveThirtyEight)
-tema_covid <- function(base_size = 14) {
-  theme_fivethirtyeight(base_size = base_size) +
-    theme(
-      plot.title = element_text(face = "bold", hjust = 0.5),
-      plot.subtitle = element_text(hjust = 0.5),
-      legend.position = "bottom",
-      legend.title = element_blank(),
-      panel.grid.minor = element_blank()
-    )
-}
+#' Gráfico de Tendência com Foco em Desigualdade Racial
+plot_indicador_raca <- function(data, titulo = "", eixo_y = "Taxa por 100k") {
+  req_cols <- c("ano", "raca_cor_agreg", "taxa_mortalidade")
+  if (!all(req_cols %in% names(data))) return(NULL)
 
-# --- GRÁFICOS TRÂNSITO ---
-
-plot_tendencia_nacional <- function(data, col_y = "obitos", titulo = "", subtitulo = "", cor = cores_maio$amarelo) {
   data %>%
-    ggplot(aes(x = ano, y = !!sym(col_y))) +
-    geom_line(color = cor, linewidth = 1.2) +
-    geom_point(color = cor, size = 2.5) +
+    ggplot(aes(x = ano, y = taxa_mortalidade, color = raca_cor_agreg)) +
+    geom_line(linewidth = 1.2, alpha = 0.8) +
+    geom_point(size = 3) +
+    get_cebrap_color_scale() +
     scale_y_continuous(labels = label_number(big.mark = ".", decimal.mark = ",")) +
-    scale_x_continuous(breaks = seq(min(data$ano, na.rm=T), max(data$ano, na.rm=T), by = 2)) +
-    labs(title = titulo, subtitle = subtitulo, x = NULL, y = NULL) +
-    tema_original()
+    scale_x_continuous(breaks = seq(min(data$ano), max(data$ano), by = 1)) +
+    labs(
+      title = titulo,
+      subtitle = "Desagregação por Raça/Cor (Agregação Institucional)",
+      x = "Ano de Ocorrência",
+      y = eixo_y,
+      color = "Grupo Racial"
+    ) +
+    tema_plataforma() # Tema definido no core/setup.R
 }
 
-plot_heatmap_sazonalidade <- function(data) {
-  meses_pt <- c("Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez")
+#' Gráfico de Disparidade (Rate Ratio)
+#' Compara a taxa de outros grupos em relação à categoria Branca
+plot_disparidade_raca <- function(data, ref_group = "Branca") {
+  # Lógica de cálculo de disparidade em tempo de execução para o gráfico
+  data_ref <- data %>% 
+    filter(raca_cor_agreg == ref_group) %>%
+    select(ano, taxa_ref = taxa_mortalidade)
   
   data %>%
-    mutate(mes_lbl = factor(meses_pt[mes], levels = meses_pt)) %>%
-    ggplot(aes(x = mes_lbl, y = factor(ano), fill = obitos)) +
-    geom_tile(color = "white") +
-    scale_fill_gradient(low = "#FFF6CC", high = cores_maio$vermelho, labels = label_number(big.mark = ".", decimal.mark = ",")) +
-    labs(title = "Sazonalidade das Mortes", x = NULL, y = NULL, fill = "Óbitos") +
-    tema_original() +
-    theme(panel.grid = element_blank())
-}
-
-# --- GRÁFICOS COVID ---
-
-plot_covid_raca_sexo <- function(data) {
-  data %>%
-    ggplot(aes(x = obitos, y = fct_reorder(raca_cor, obitos), fill = sexo)) +
-    geom_col(colour = "black") +
-    labs(title = "Óbitos por COVID-19 - PEA",
-         subtitle = "Distribuição por Raça/Cor e Sexo",
-         x = "Número de Óbitos",
-         y = NULL) +
-    tema_covid()
-}
-
-plot_covid_ocupacao <- function(data) {
-  # Reprodução do gráfico de dispersão do relatório
-  data %>%
-    ggplot(aes(x = obitos_covid, y = obitos_covid_cada_100_grupo, size = obitos_total)) +
-    geom_point(alpha = 0.5, color = "steelblue") +
-    scale_size(range = c(2, 20)) +
-    scale_y_continuous(labels = function(x) paste0(x, "%")) +
-    labs(title = "Mortalidade por Ocupação",
-         subtitle = "Círculos representam o total de óbitos no grupo",
-         x = "N° óbitos COVID-19",
-         y = "% óbitos COVID-19 no grupo") +
-    tema_covid() +
-    theme(legend.position = "none")
+    left_join(data_ref, by = "ano") %>%
+    mutate(rate_ratio = taxa_mortalidade / taxa_ref) %>%
+    filter(raca_cor_agreg != ref_group) %>%
+    ggplot(aes(x = ano, y = rate_ratio, fill = raca_cor_agreg)) +
+    geom_col(position = "dodge") +
+    geom_hline(yintercept = 1, linetype = "dashed", color = "red") +
+    get_cebrap_color_scale() +
+    labs(
+      title = "Razão de Taxas (Rate Ratio)",
+      subtitle = paste0("Referência (1.0): População ", ref_group),
+      x = "Ano",
+      y = "Vezes mais mortes",
+      fill = "Grupo"
+    ) +
+    tema_plataforma()
 }

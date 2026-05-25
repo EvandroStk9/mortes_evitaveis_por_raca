@@ -1,12 +1,13 @@
 # install_deps.R
-# Script para instalar todas as dependncias do projeto
+# Script para instalar todas as dependências do projeto
 
-message("Verificando e instalando dependncias...")
+message("Verificando e instalando dependências...")
 
 pacotes <- c(
   "targets", "tarchetypes", "tidyverse", "arrow", "duckdb", 
   "dbplyr", "geobr", "sf", "janitor", "pointblank", 
-  "shiny", "shinydashboard", "DT", "here", "qs", "lubridate", "remotes"
+  "shiny", "shinydashboard", "DT", "here", "qs", "lubridate", 
+  "remotes", "ggthemes", "ggtext", "showtext", "sysfonts"
 )
 
 # Instala pacotes do CRAN
@@ -20,4 +21,4 @@ if (!requireNamespace("microdatasus", quietly = TRUE)) {
   remotes::install_github("rfsaldanha/microdatasus")
 }
 
-message("Dependncias verificadas.")
+message("Dependências verificadas.")

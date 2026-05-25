@@ -2,18 +2,20 @@
 library(shiny)
 library(shinydashboard)
 
-# Garante encoding UTF-8 no UI
 header <- dashboardHeader(
-  title = "Mortes Evit\u00e1veis", 
+  title = "Painel Institucional CEBRAP", 
   titleWidth = 300
 )
 
 sidebar <- dashboardSidebar(
   width = 300,
   sidebarMenu(
-    menuItem("Vis\u00e3o Geral", tabName = "geral", icon = icon("dashboard")),
-    menuItem("Tr\u00e2nsito (Original)", tabName = "transito", icon = icon("car")),
-    menuItem("COVID-19 (Original)", tabName = "covid", icon = icon("virus")),
+    menuItem("Vis\u00e3o Geral", tabName = "geral", icon = icon("globe-americas")),
+    menuItem("Mortes no Tr\u00e2nsito", tabName = "transito_std", icon = icon("car")),
+    menuItem("COVID-19", tabName = "covid_std", icon = icon("virus")),
+    menuItem("Hist\u00f3rico (Fidelidade)", icon = icon("history"),
+             menuSubItem("Tr\u00e2nsito Original", tabName = "transito_orig"),
+             menuSubItem("COVID Original", tabName = "covid_orig")),
     menuItem("Metodologia", tabName = "metodo", icon = icon("book"))
   )
 )
@@ -22,19 +24,25 @@ body <- dashboardBody(
   tags$head(
     tags$style(HTML("
       .content-wrapper { background-color: #f4f6f9; }
-      .main-header .logo { font-weight: bold; }
+      .main-header .logo { font-weight: bold; font-size: 18px; }
+      .box-title { font-weight: bold; }
     "))
   ),
   tabItems(
-    tabItem(tabName = "transito",
-            h2("An\u00e1lise de Mortes no Tr\u00e2nsito (Fidelidade Original)"),
-            mod_indicadores_ui("transito_ui")
+    # Aba Padronizada: Trânsito
+    tabItem(tabName = "transito_std",
+            mod_standard_ui("transito_std", label = "Tr\u00e2nsito")
     ),
-    tabItem(tabName = "covid",
-            h2("An\u00e1lise COVID-19 (Fidelidade Original)"),
-            mod_covid_ui("covid_ui")
-    )
+    
+    # Aba Padronizada: COVID
+    tabItem(tabName = "covid_std",
+            mod_standard_ui("covid_std", label = "COVID-19")
+    ),
+    
+    # Abas Originais (Mantidas para referência)
+    tabItem(tabName = "transito_orig", mod_indicadores_ui("transito_ui")),
+    tabItem(tabName = "covid_orig", mod_covid_ui("covid_ui"))
   )
 )
 
-dashboardPage(header, sidebar, body, skin = "blue")
+dashboardPage(header, sidebar, body, skin = "black")
