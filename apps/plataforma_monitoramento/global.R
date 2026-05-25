@@ -4,29 +4,24 @@ library(shinydashboard)
 library(tidyverse)
 library(targets)
 library(DT)
+library(arrow)
 
-# Carrega ambiente core
+# Carrega ambiente core e utilitários de visualização
 source("../../core/setup.R")
 lapply(list.files("R", full.names = TRUE), source)
+source("../../core/R/utils_viz.R")
 
-# Conexo com o Lakehouse (Targets)
-get_gold_data <- function(target_name) {
-  # Tenta ler do store do targets
-  res <- tryCatch({
-    # targets::tar_read_raw exige que o store exista
-    if (dir.exists("../../_targets")) {
-       targets::tar_read_raw(target_name, store = "../../_targets")
-    } else {
-      NULL
-    }
-  }, error = function(e) {
-    # Fallback para o arquivo fsico em data/gold/ (caso exportado)
-    path <- paste0("../../data/gold/", target_name, ".parquet")
-    if (file.exists(path)) {
-      arrow::read_parquet(path)
-    } else {
-      NULL
-    }
-  })
-  return(res)
+# Função para carregar dados de qualquer fonte disponível
+load_platform_data <- function(file_name) {
+  # Tenta primeiro no staging (dados originais importados)
+  staging_path <- file.path("../../data/staging/transito", file_name)
+  
+  if (file.exists(staging_path)) {
+    return(read_parquet(staging_path))
+  }
+  
+  # Se não existir, tenta no targets store
+  tryCatch({
+    tar_read_raw(gsub(".parquet", "", file_name), store = "../../_targets")
+  }, error = function(e) NULL)
 }

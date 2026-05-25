@@ -5,56 +5,65 @@ mod_indicadores_ui <- function(id) {
   ns <- NS(id)
   tagList(
     fluidRow(
-      box(width = 3, title = "Filtros", status = "primary", solidHeader = TRUE,
-          selectInput(ns("select_raca"), "Raça/Cor:", 
-                      choices = c("Todas", "Branca", "Preta", "Parda", "Amarela", "Indígena")),
-          selectInput(ns("select_uf"), "Estado:", choices = NULL)
-      ),
-      box(width = 9, title = "Tendência Temporal", status = "info", solidHeader = TRUE,
-          plotOutput(ns("plot_tendencia"))
+      box(width = 12, status = "primary", solidHeader = TRUE,
+          title = "Tendência Nacional e Taxa por 100k",
+          column(6, plotOutput(ns("plot_total"))),
+          column(6, plotOutput(ns("plot_taxa")))
       )
     ),
     fluidRow(
-      box(width = 12, title = "Tabela de Indicadores", 
-          DT::DTOutput(ns("tabela_gold")))
+      box(width = 8, status = "info", solidHeader = TRUE,
+          title = "Sazonalidade Mensal",
+          plotOutput(ns("plot_heatmap"))
+      ),
+      box(width = 4, status = "warning", solidHeader = TRUE,
+          title = "Filtros e Exportação",
+          selectInput(ns("select_raca"), "Raça/Cor:", 
+                      choices = c("Todas", "Branca", "Negra", "Indígena", "Amarela")),
+          downloadButton(ns("download_data"), "Baixar Dados (CSV)")
+      )
     )
   )
 }
 
 # Server do Módulo
-mod_indicadores_server <- function(id, data_target) {
+mod_indicadores_server <- function(id, data_total, data_mes) {
   moduleServer(id, function(input, output, session) {
     
-    # Reativo para filtrar dados
-    df_filtrado <- reactive({
-      res <- data_target()
-      
-      if (nrow(res) == 0 || !"raca_cor_ibge" %in% names(res)) {
-        return(res)
-      }
-      
-      if (input$select_raca != "Todas") {
-        res <- res %>% filter(raca_cor_ibge == input$select_raca)
-      }
-      res
+    # Plot 1: Total de Óbitos (Estilo Amarelo Original)
+    output$plot_total <- renderPlot({
+      req(nrow(data_total()) > 0)
+      plot_tendencia_nacional(
+        data_total(), 
+        col_y = "obitos", 
+        titulo = "Mortes Totais no Brasil",
+        subtitulo = "Série Histórica (2000-2024)",
+        cor = cores_maio$amarelo
+      )
     })
     
-    output$plot_tendencia <- renderPlot({
-      req(nrow(df_filtrado()) > 0)
-      
-      df_filtrado() %>%
-        ggplot(aes(x = ano, y = taxa_mortalidade, color = raca_cor_agreg)) +
-        geom_line(linewidth = 1.2) +
-        geom_point() +
-        labs(title = "Evolução da Taxa por 100k Habitantes",
-             x = "Ano", y = "Taxa", color = "Raça/Cor") +
-        tema_plataforma()
+    # Plot 2: Taxa por 100k (Estilo Vermelho Original)
+    output$plot_taxa <- renderPlot({
+      req(nrow(data_total()) > 0)
+      plot_tendencia_nacional(
+        data_total(), 
+        col_y = "taxa_100k", 
+        titulo = "Taxa por 100 mil habitantes",
+        subtitulo = "Indicador de risco populacional",
+        cor = cores_maio$vermelho
+      )
     })
     
-    output$tabela_gold <- DT::renderDT({
-      req(nrow(df_filtrado()) > 0)
-      df_filtrado() %>% 
-        DT::datatable(options = list(pageLength = 10))
+    # Plot 3: Heatmap Sazonalidade
+    output$plot_heatmap <- renderPlot({
+      req(nrow(data_mes()) > 0)
+      plot_heatmap_sazonalidade(data_mes())
     })
+    
+    # Download
+    output$download_data <- downloadHandler(
+      filename = function() { paste0(id, "_data.csv") },
+      content = function(file) { write.csv(data_total(), file) }
+    )
   })
 }

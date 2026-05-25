@@ -2,23 +2,19 @@
 
 function(input, output, session) {
   
-  # Carregamento Reativo dos Dados Gold
-  data_transito <- reactive({
-    # No pipeline atual o nome  'transito_gold'
-    dat <- get_gold_data("transito_gold")
-    if (is.null(dat)) return(tibble())
-    dat
+  # Dados de Trânsito (Fidelidade ao repositório original)
+  transito_ano <- reactive({
+    load_platform_data("mortes_br_ano.parquet")
   })
   
-  data_covid <- reactive({
-    # Se o dado de COVID ainda no existir, retorna um tibble vazio
-    dat <- get_gold_data("covid_gold")
-    if (is.null(dat)) return(tibble())
-    dat
+  transito_mes <- reactive({
+    load_platform_data("mortes_br_ano_mes.parquet")
   })
   
-  # Inicializao dos Mdulos
-  mod_indicadores_server("transito_ui", data_transito)
-  mod_indicadores_server("covid_ui", data_covid)
+  # Inicialização dos Módulos com múltiplos datasets
+  mod_indicadores_server("transito_ui", transito_ano, transito_mes)
+  
+  # Placeholder para COVID
+  mod_indicadores_server("covid_ui", reactive(tibble()), reactive(tibble()))
   
 }
