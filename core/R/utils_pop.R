@@ -1,26 +1,18 @@
 # core/R/utils_pop.R
 # Utilitrios para busca de dados populacionais (IBGE/SIDRA)
 
-#' Busca populao por municpio, raa e sexo (Censo 2022 ou Estimativas)
-#' @param years anos desejados
+#' Busca populao por UF, raa e sexo
 get_pop_ibge <- function(years) {
-  # Placeholder para busca via sidrar
-  # Tabela 9514 (Censo 2022) ou 6579 (Estimativas anuais)
   message("Buscando populao IBGE para os anos: ", paste(years, collapse = ", "))
   
-  # Exemplo de estrutura de retorno esperada
-  # No mundo real, usaramos sidrar::get_sidra()
-  # Por enquanto, criaremos um dataset vazio tipado
-  tibble(
-    code_muni = character(),
-    ano = integer(),
-    raca_cor = character(),
-    populacao = numeric()
-  )
-}
-
-#' Ajusta populao para anos intercensitrios (Interpolação)
-interpolate_pop <- function(pop_data) {
-  # Lgica para preencher anos entre censos
-  pop_data
+  # Placeholder para simular dados de populao por UF e Raa_Cor_Agreg
+  # Em um cenario real, usariamos sidrar::get_sidra()
+  expand.grid(
+    code_uf = c("11", "12", "13", "14", "15", "16", "17", "21", "22", "23", "24", "25", "26", "27", "28", "29", "31", "32", "33", "35", "41", "42", "43", "50", "51", "52", "53"),
+    ano = years,
+    raca_cor_agreg = c("Branca", "Negra", "Indgena", "Amarela", "Outros/Ignorado"),
+    stringsAsFactors = FALSE
+  ) %>%
+    as_tibble() %>%
+    mutate(populacao = 1000000) # Valor ficticio para teste
 }

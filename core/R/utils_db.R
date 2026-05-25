@@ -10,25 +10,29 @@ get_db_con <- function(db_path = ":memory:") {
 }
 
 #' L arquivos Parquet usando DuckDB sem carregar na RAM do R
-#' @param path Caminho para o arquivo ou diretrio de Parquets
 open_parquet_db <- function(path, con = get_db_con()) {
-  # Usa a funo read_parquet do DuckDB via SQL
   tbl(con, sprintf("read_parquet('%s')", path))
 }
 
 #' Exemplo de agregao pesada via DuckDB
-#' @description Realiza a soma de bitos por UF e Raa usando o motor do DuckDB
 summarize_mortality_db <- function(parquet_path) {
   con <- get_db_con()
   
-  # O processamento abaixo ocorre no DuckDB, no no R
+  # O processamento ocorre no DuckDB. 
+  # O SIM costuma ter CODMUNRES ou codmunres. DuckDB read_parquet costuma ler como minusculo.
   res <- open_parquet_db(parquet_path, con) %>%
-    group_by(code_uf, raca_cor, ano) %>%
+    # Garante nomes padronizados para a query
+    janitor::clean_names() %>%
+    # Extrai UF (primeiros 2 digitos do municipio)
+    mutate(code_uf = substr(as.character(codmunres), 1, 2)) %>%
+    group_by(code_uf, racacor, ano) %>%
     summarise(
       total_obitos = n(),
       .groups = "drop"
     ) %>%
-    collect() # S traz o resultado final agregado para o R
+    collect() %>%
+    # Renomeia para bater com o restante do pipeline
+    rename(raca_cor = racacor)
     
   dbDisconnect(con, shutdown = TRUE)
   return(res)
