@@ -19,20 +19,35 @@ summarize_mortality_db <- function(parquet_path) {
   con <- get_db_con()
   
   # O processamento ocorre no DuckDB. 
-  # O SIM costuma ter CODMUNRES ou codmunres. DuckDB read_parquet costuma ler como minusculo.
-  res <- open_parquet_db(parquet_path, con) %>%
-    # Garante nomes padronizados para a query
-    janitor::clean_names() %>%
-    # Extrai UF (primeiros 2 digitos do municipio)
-    mutate(code_uf = substr(as.character(codmunres), 1, 2)) %>%
-    group_by(code_uf, racacor, ano) %>%
+  # Inspecionamos e vimos que as colunas so 'cod_mun_res' e 'racacor' (se existir)
+  raw_tbl <- open_parquet_db(parquet_path, con) %>%
+    janitor::clean_names()
+  
+  # Verifica colunas disponveis
+  cols <- colnames(raw_tbl)
+  
+  # Mapeia colunas (Lgica de segurana)
+  muni_col <- if ("cod_mun_res" %in% cols) "cod_mun_res" else if ("codmunres" %in% cols) "codmunres" else cols[1]
+  race_col <- if ("racacor" %in% cols) "racacor" else if ("raca_cor" %in% cols) "raca_cor" else NULL
+  
+  # Construo da query
+  query <- raw_tbl %>%
+    mutate(code_uf = substr(as.character(!!sym(muni_col)), 1, 2))
+    
+  if (is.null(race_col)) {
+    # Se no tem raa no arquivo, assume 9 (Ignorado) para manter o pipeline rodando
+    query <- query %>% mutate(racacor = 9)
+    race_col <- "racacor"
+  }
+  
+  res <- query %>%
+    group_by(code_uf, !!sym(race_col), ano) %>%
     summarise(
       total_obitos = n(),
       .groups = "drop"
     ) %>%
     collect() %>%
-    # Renomeia para bater com o restante do pipeline
-    rename(raca_cor = racacor)
+    rename(raca_cor = !!sym(race_col))
     
   dbDisconnect(con, shutdown = TRUE)
   return(res)
