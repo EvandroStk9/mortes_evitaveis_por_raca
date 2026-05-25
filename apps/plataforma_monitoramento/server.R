@@ -3,13 +3,18 @@
 function(input, output, session) {
   
   # Carregamento Reativo dos Dados Gold
-  # Garante que o app use a verso mais recente do pipeline
   data_transito <- reactive({
-    get_gold_data("transito_stg") # Exemplo de target
+    # No pipeline atual o nome  'transito_gold'
+    dat <- get_gold_data("transito_gold")
+    if (is.null(dat)) return(tibble())
+    dat
   })
   
   data_covid <- reactive({
-    get_gold_data("covid_gold")
+    # Se o dado de COVID ainda no existir, retorna um tibble vazio
+    dat <- get_gold_data("covid_gold")
+    if (is.null(dat)) return(tibble())
+    dat
   })
   
   # Inicializao dos Mdulos

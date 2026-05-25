@@ -10,13 +10,23 @@ source("../../core/setup.R")
 lapply(list.files("R", full.names = TRUE), source)
 
 # Conexo com o Lakehouse (Targets)
-# Em produo, leramos diretamente dos arquivos Parquet em data/gold/
 get_gold_data <- function(target_name) {
-  # Tenta ler do store do targets, se no existir, busca o arquivo parquet
-  tryCatch({
-    tar_read_raw(target_name, store = "../../_targets")
+  # Tenta ler do store do targets
+  res <- tryCatch({
+    # targets::tar_read_raw exige que o store exista
+    if (dir.exists("../../_targets")) {
+       targets::tar_read_raw(target_name, store = "../../_targets")
+    } else {
+      NULL
+    }
   }, error = function(e) {
-    # Fallback para o arquivo fsico caso o store no esteja disponvel
-    arrow::read_parquet(paste0("../../data/gold/", target_name, ".parquet"))
+    # Fallback para o arquivo fsico em data/gold/ (caso exportado)
+    path <- paste0("../../data/gold/", target_name, ".parquet")
+    if (file.exists(path)) {
+      arrow::read_parquet(path)
+    } else {
+      NULL
+    }
   })
+  return(res)
 }

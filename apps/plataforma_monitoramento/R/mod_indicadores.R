@@ -35,16 +35,19 @@ mod_indicadores_server <- function(id, data_target) {
     })
     
     output$plot_tendencia <- renderPlot({
+      req(nrow(df_filtrado()) > 0)
+      
       df_filtrado() %>%
-        ggplot(aes(x = ano, y = taxa_mortalidade, color = raca_cor)) +
-        geom_line(size = 1.2) +
+        ggplot(aes(x = ano, y = taxa_mortalidade, color = raca_cor_agreg)) +
+        geom_line(linewidth = 1.2) +
         geom_point() +
         labs(title = "Evoluo da Taxa por 100k Habitantes",
-             x = "Ano", y = "Taxa") +
-        tema_plataforma() # Usa o tema definido no core
+             x = "Ano", y = "Taxa", color = "Raa/Cor") +
+        tema_plataforma()
     })
     
     output$tabela_gold <- DT::renderDT({
+      req(nrow(df_filtrado()) > 0)
       df_filtrado() %>% 
         DT::datatable(options = list(pageLength = 10))
     })
