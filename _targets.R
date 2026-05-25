@@ -3,7 +3,7 @@ library(targets)
 library(tarchetypes)
 library(tidyverse)
 
-# Carrega todas as funções da pasta core/R
+# Carrega funcoes
 lapply(list.files(here::here("core/R"), full.names = TRUE), source)
 source(here::here("core/setup.R"))
 
@@ -12,7 +12,9 @@ tar_option_set(
   format = "parquet"
 )
 
+# Definicao de alvos como uma lista formal
 list(
+  # 1. Metadados UF
   tar_target(mun_br_meta, {
     geobr::read_municipality(year = 2022) %>% 
       janitor::clean_names() %>% 
@@ -21,11 +23,12 @@ list(
       distinct()
   }),
   
+  # 2. Pop base
   tar_target(pop_base, get_pop_ibge(years = 2010:2024)),
   
+  # 3. Transito Gold
   tar_target(transito_gold, {
     files <- list.files(here::here("data/raw/transito"), pattern = "sim_do_v_*.parquet", full.names = TRUE)
-    
     res <- summarize_mortality_db(files) %>%
       standardize_race_groups(col = "raca_cor") %>% 
       left_join(mun_br_meta, by = "code_uf") %>%
