@@ -24,6 +24,6 @@ outputs/
 _docs_render/
 
 # Pacotes
-renv/
-library/
+renv/library/
+renv/staging/
 .positai
