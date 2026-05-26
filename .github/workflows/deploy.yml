@@ -37,7 +37,7 @@ jobs:
           )
           rsconnect::deployApp(
             appDir = ".",
-            appPrimaryDoc = "app.R",
+            appPrimaryDoc = here::here("app","app.R"),
             appName = "mortes_evitaveis_por_raca",
             forceUpdate = TRUE
           )
