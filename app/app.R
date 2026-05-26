@@ -4,7 +4,6 @@ library(shiny)
 library(shinydashboard)
 library(tidyverse)
 library(arrow)
-library(here)
 library(plotly)
 library(yaml)
 
@@ -126,7 +125,7 @@ death_module_server <- function(id, file_name) {
 # --- Dashboard Principal ---
 
 # Carrega metadados para gerar UI dinâmica
-metadata_files <- list.files(here("metadata"), pattern = "\\.yaml$", full.names = TRUE)
+metadata_files <- list.files("metadata", pattern = "\\.yaml$", full.names = TRUE)
 metadata_list <- map(metadata_files, yaml::read_yaml)
 
 ui <- dashboardPage(

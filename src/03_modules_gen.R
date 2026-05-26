@@ -43,7 +43,7 @@ run_metadata_engine <- function(yaml_file) {
 
 # Execução
 dir.create(here("app/data/"), showWarnings = FALSE)
-yaml_files <- list.files(here("metadata"), "*.yaml", full.names = TRUE)
+yaml_files <- list.files(here("app"/"metadata"), "*.yaml", full.names = TRUE)
 walk(yaml_files, run_metadata_engine)
 
 message("--- Módulos Gold gerados com sucesso ---")
