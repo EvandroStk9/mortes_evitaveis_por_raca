@@ -13,6 +13,12 @@ jobs:
         with:
           use-public-rspm: true
           
+      # Correção: Lista de pacotes em uma única linha para evitar erro de interpretação
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends cmake libcurl4-openssl-dev libfontconfig1-dev libfreetype6-dev libnode-dev libx11-dev pandoc
+            
       - uses: r-lib/actions/setup-renv@v2
       
       - name: Deploy to ShinyApps.io
@@ -24,7 +30,8 @@ jobs:
             secret = Sys.getenv("SHINYAPPS_SECRET")
           )
           rsconnect::deployApp(
-            appDir = "app",
+            appDir = ".",
             appName = "mortes-evitaveis-raca",
-            forceUpdate = TRUE
+            forceUpdate = TRUE,
+            appFiles = c("app", "data", "metadata", "main.R", ".Rprofile", "renv.lock")
           )
