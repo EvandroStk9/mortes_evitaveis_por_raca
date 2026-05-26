@@ -1,0 +1,12 @@
+id: "covid"
+nome: "COVID-19"
+conceito: "Mortes confirmadas por COVID-19."
+metodologia:
+  cid_regex: "B342"
+  filtros:
+    ano_inicio: 2020
+  agregacoes:
+    - "ano_trimestre"
+    - "raca_agreg"
+    - "sexo"
+notas_tecnicas: "Baseada no código CID-10 B342."

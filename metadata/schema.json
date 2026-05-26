@@ -1,0 +1,24 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Módulo Epidemiológico",
+  "type": "object",
+  "required": ["id", "nome", "metodologia"],
+  "properties": {
+    "id": { "type": "string" },
+    "nome": { "type": "string" },
+    "conceito": { "type": "string" },
+    "metodologia": {
+      "type": "object",
+      "required": ["cid_regex"],
+      "properties": {
+        "cid_regex": { "type": "string" },
+        "filtros": { "type": "object" },
+        "agregacoes": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "notas_tecnicas": { "type": "string" }
+  }
+}

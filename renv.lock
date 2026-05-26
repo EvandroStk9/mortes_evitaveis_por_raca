@@ -201,6 +201,42 @@
       "Maintainer": "Hadley Wickham <hadley@posit.co>",
       "Repository": "CRAN"
     },
+    "V8": {
+      "Package": "V8",
+      "Version": "8.2.0",
+      "Source": "Repository",
+      "Type": "Package",
+      "Title": "Embedded JavaScript and WebAssembly Engine for R",
+      "Authors@R": "c( person(\"Jeroen\", \"Ooms\", role = c(\"aut\", \"cre\"), email = \"jeroenooms@gmail.com\", comment = c(ORCID = \"0000-0002-4035-0289\")), person(\"George\", \"Stagg\", role = \"ctb\", comment = c(ORCID = \"0009-0006-3173-9846\")), person(\"Jan Marvin\", \"Garbuszus\", role = \"ctb\"))",
+      "Description": "An R interface to V8 <https://v8.dev>: Google's open source JavaScript and WebAssembly engine. This package can be compiled either with V8 or NodeJS  when built as a shared library.",
+      "License": "MIT + file LICENSE",
+      "URL": "https://jeroen.r-universe.dev/V8",
+      "BugReports": "https://github.com/jeroen/v8/issues",
+      "SystemRequirements": "On Linux you can build against libv8-dev (Debian) or v8-devel (Fedora). We also provide static libv8 binaries for most platforms, see the README for details.",
+      "NeedsCompilation": "yes",
+      "VignetteBuilder": "knitr",
+      "Imports": [
+        "Rcpp (>= 0.12.12)",
+        "jsonlite (>= 1.0)",
+        "curl (>= 1.0)",
+        "utils"
+      ],
+      "LinkingTo": [
+        "Rcpp"
+      ],
+      "Suggests": [
+        "testthat",
+        "knitr",
+        "rmarkdown"
+      ],
+      "RoxygenNote": "7.3.1",
+      "Language": "en-US",
+      "Encoding": "UTF-8",
+      "Biarch": "true",
+      "Author": "Jeroen Ooms [aut, cre] (ORCID: <https://orcid.org/0000-0002-4035-0289>), George Stagg [ctb] (ORCID: <https://orcid.org/0009-0006-3173-9846>), Jan Marvin Garbuszus [ctb]",
+      "Maintainer": "Jeroen Ooms <jeroenooms@gmail.com>",
+      "Repository": "CRAN"
+    },
     "arrow": {
       "Package": "arrow",
       "Version": "24.0.0",
@@ -2249,52 +2285,6 @@
       "Maintainer": "Thomas Lin Pedersen <thomas.pedersen@posit.co>",
       "Repository": "CRAN"
     },
-    "janitor": {
-      "Package": "janitor",
-      "Version": "2.2.1",
-      "Source": "Repository",
-      "Title": "Simple Tools for Examining and Cleaning Dirty Data",
-      "Authors@R": "c(person(\"Sam\", \"Firke\", email = \"samuel.firke@gmail.com\", role = c(\"aut\", \"cre\")), person(\"Bill\", \"Denney\", email = \"wdenney@humanpredictions.com\", role = \"ctb\"), person(\"Chris\", \"Haid\", email = \"chrishaid@gmail.com\", role = \"ctb\"), person(\"Ryan\", \"Knight\", email = \"ryangknight@gmail.com\", role = \"ctb\"), person(\"Malte\", \"Grosser\", email = \"malte.grosser@gmail.com\", role = \"ctb\"), person(\"Jonathan\", \"Zadra\", email = \"jonathan.zadra@sorensonimpact.com\", role = \"ctb\"))",
-      "Description": "The main janitor functions can: perfectly format data.frame column names; provide quick counts of variable combinations (i.e., frequency tables and crosstabs); and explore duplicate records. Other janitor functions nicely format the tabulation results. These tabulate-and-report functions approximate popular features of SPSS and Microsoft Excel. This package follows the principles of the \"tidyverse\" and works well with the pipe function %>%. janitor was built with beginning-to-intermediate R users in mind and is optimized for user-friendliness.",
-      "URL": "https://github.com/sfirke/janitor, https://sfirke.github.io/janitor/",
-      "BugReports": "https://github.com/sfirke/janitor/issues",
-      "Depends": [
-        "R (>= 3.1.2)"
-      ],
-      "Imports": [
-        "dplyr (>= 1.0.0)",
-        "hms",
-        "lifecycle",
-        "lubridate",
-        "magrittr",
-        "purrr",
-        "rlang",
-        "stringi",
-        "stringr",
-        "snakecase (>= 0.9.2)",
-        "tidyselect (>= 1.0.0)",
-        "tidyr (>= 0.7.0)"
-      ],
-      "License": "MIT + file LICENSE",
-      "RoxygenNote": "7.2.3",
-      "Suggests": [
-        "dbplyr",
-        "knitr",
-        "rmarkdown",
-        "RSQLite",
-        "sf",
-        "testthat (>= 3.0.0)",
-        "tibble",
-        "tidygraph"
-      ],
-      "VignetteBuilder": "knitr",
-      "Encoding": "UTF-8",
-      "Config/testthat/edition": "3",
-      "NeedsCompilation": "no",
-      "Author": "Sam Firke [aut, cre], Bill Denney [ctb], Chris Haid [ctb], Ryan Knight [ctb], Malte Grosser [ctb], Jonathan Zadra [ctb]",
-      "Maintainer": "Sam Firke <samuel.firke@gmail.com>",
-      "Repository": "CRAN"
-    },
     "jquerylib": {
       "Package": "jquerylib",
       "Version": "0.1.4",
@@ -2345,6 +2335,37 @@
       "Encoding": "UTF-8",
       "NeedsCompilation": "yes",
       "Author": "Jeroen Ooms [aut, cre] (<https://orcid.org/0000-0002-4035-0289>), Duncan Temple Lang [ctb], Lloyd Hilaiel [cph] (author of bundled libyajl)",
+      "Repository": "CRAN"
+    },
+    "jsonvalidate": {
+      "Package": "jsonvalidate",
+      "Version": "1.5.0",
+      "Source": "Repository",
+      "Title": "Validate 'JSON' Schema",
+      "Authors@R": "c(person(\"Rich\", \"FitzJohn\", role = c(\"aut\", \"cre\"), email = \"rich.fitzjohn@gmail.com\"), person(\"Rob\", \"Ashton\", role = \"aut\"), person(\"Alex\", \"Hill\", role = \"ctb\"), person(\"Alicia\", \"Schep\", role = \"ctb\"), person(\"Ian\", \"Lyttle\", role = \"ctb\"), person(\"Kara\", \"Woo\", role = \"ctb\"), person(\"Mathias\", \"Buus\", role = c(\"aut\", \"cph\"), comment = \"Author of bundled imjv library\"), person(\"Evgeny\", \"Poberezkin\", role = c(\"aut\", \"cph\"), comment = \"Author of bundled Ajv library\"))",
+      "Maintainer": "Rich FitzJohn <rich.fitzjohn@gmail.com>",
+      "Description": "Uses the node library 'is-my-json-valid' or 'ajv' to validate 'JSON' against a 'JSON' schema.  Drafts 04, 06 and 07 of 'JSON' schema are supported.",
+      "License": "MIT + file LICENSE",
+      "URL": "https://docs.ropensci.org/jsonvalidate/, https://github.com/ropensci/jsonvalidate",
+      "BugReports": "https://github.com/ropensci/jsonvalidate/issues",
+      "Imports": [
+        "R6",
+        "V8"
+      ],
+      "Suggests": [
+        "knitr",
+        "jsonlite",
+        "rmarkdown",
+        "testthat",
+        "withr"
+      ],
+      "RoxygenNote": "7.3.2",
+      "VignetteBuilder": "knitr",
+      "Encoding": "UTF-8",
+      "Language": "en-GB",
+      "Config/testthat/edition": "3",
+      "NeedsCompilation": "no",
+      "Author": "Rich FitzJohn [aut, cre], Rob Ashton [aut], Alex Hill [ctb], Alicia Schep [ctb], Ian Lyttle [ctb], Kara Woo [ctb], Mathias Buus [aut, cph] (Author of bundled imjv library), Evgeny Poberezkin [aut, cph] (Author of bundled Ajv library)",
       "Repository": "CRAN"
     },
     "knitr": {
@@ -3997,41 +4018,6 @@
       "NeedsCompilation": "no",
       "Author": "Winston Chang [aut, cre], Barbara Borges Ribeiro [aut], Posit Software, PBC [cph], Almasaeed Studio [ctb, cph] (AdminLTE theme for Bootstrap), Adobe Systems Incorporated [ctb, cph] (Source Sans Pro font)",
       "Maintainer": "Winston Chang <winston@posit.co>",
-      "Repository": "CRAN"
-    },
-    "snakecase": {
-      "Package": "snakecase",
-      "Version": "0.11.1",
-      "Source": "Repository",
-      "Date": "2023-08-27",
-      "Title": "Convert Strings into any Case",
-      "Description": "A consistent, flexible and easy to use tool to parse and convert strings into cases like snake or camel among others.",
-      "Authors@R": "c( person(\"Malte\", \"Grosser\", , \"malte.grosser@gmail.com\", role = c(\"aut\", \"cre\")))",
-      "Maintainer": "Malte Grosser <malte.grosser@gmail.com>",
-      "Depends": [
-        "R (>= 3.2)"
-      ],
-      "Imports": [
-        "stringr",
-        "stringi"
-      ],
-      "Suggests": [
-        "testthat",
-        "covr",
-        "tibble",
-        "purrrlyr",
-        "knitr",
-        "rmarkdown",
-        "magrittr"
-      ],
-      "URL": "https://github.com/Tazinho/snakecase",
-      "BugReports": "https://github.com/Tazinho/snakecase/issues",
-      "Encoding": "UTF-8",
-      "License": "GPL-3",
-      "RoxygenNote": "6.1.1",
-      "VignetteBuilder": "knitr",
-      "NeedsCompilation": "no",
-      "Author": "Malte Grosser [aut, cre]",
       "Repository": "CRAN"
     },
     "sourcetools": {

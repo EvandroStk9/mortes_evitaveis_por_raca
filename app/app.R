@@ -1,9 +1,15 @@
-# src/03_app.R
+options(scipen = 999) # Evita notação científica)
+
 # Dashboard consolidado - Lê dados Gold padronizados
-library(shiny); library(shinydashboard); library(tidyverse); library(arrow); library(here); library(plotly)
+library(shiny)
+library(shinydashboard)
+library(tidyverse)
+library(arrow)
+library(here)
+library(plotly)
 
 ui <- dashboardPage(
-  dashboardHeader(title = "Plataforma CEBRAP"),
+  dashboardHeader(title = "Mortes evitáveis"),
   dashboardSidebar(
     sidebarMenu(
       menuItem("Trânsito", tabName = "transito"),
@@ -26,8 +32,8 @@ server <- function(input, output) {
     req(file.exists(path), paste("Arquivo não encontrado:", file))
     df <- read_parquet(path)
     
-    p <- ggplot(df, aes(x = ano, y = total, fill = raca_agreg,
-                        text = paste("Ano:", ano, "<br>Raça:", raca_agreg, "<br>Total:", total))) +
+    p <- ggplot(df, aes(x = ano_trimestre, y = total, fill = raca_agreg,
+                        text = paste("Ano:", ano_trimestre, "<br>Raça:", raca_agreg, "<br>Total:", total))) +
       geom_col(position = "stack") + theme_minimal() + 
       labs(x="Ano", y="Total", fill="Raça")
     

@@ -1,0 +1,12 @@
+id: "transito"
+nome: "Mortes no Trânsito"
+conceito: "Mortes evitáveis relacionadas a acidentes de transporte terrestre."
+metodologia:
+  cid_regex: "^V"
+  filtros:
+    ano_inicio: 2010
+  agregacoes:
+    - "ano_trimestre"
+    - "raca_agreg"
+    - "sexo"
+notas_tecnicas: "Baseada no código CID-10 iniciado por V."

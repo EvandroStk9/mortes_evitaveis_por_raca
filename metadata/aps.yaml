@@ -1,0 +1,12 @@
+id: "aps"
+nome: "Doenças Sensíveis à APS"
+conceito: "Mortes evitáveis por doenças sensíveis à Atenção Primária à Saúde."
+metodologia:
+  cid_regex: "^[A|B|E|I|J]"
+  filtros:
+    ano_inicio: 2000
+  agregacoes:
+    - "ano_trimestre"
+    - "raca_agreg"
+    - "sexo"
+notas_tecnicas: "Definição baseada em critérios epidemiológicos do MS."

@@ -1,23 +1,23 @@
-# Mortes Evitáveis por Raça
+# Mortes Evitáveis por Raça: Compêndio Analítico
 
-Plataforma institucional de monitoramento territorializado de desigualdades raciais.
+Esta plataforma fornece infraestrutura para monitoramento territorializado de desigualdades raciais e mortes evitáveis no Brasil.
 
-## Estrutura do Compêndio
-- `data/`: Data Lakehouse local (`raw`, `staging`, `gold`).
-- `src/`: Lógica de engenharia de dados.
-    - `01_ingest.R`: Ingestão incremental via microdatasus.
-    - `02_etl.R`: Limpeza, tipagem e padronização racial.
-    - `03_modules_gen.R`: Gerador de tabelas agregadas para os módulos (COVID, MVI, APS).
-- `app/`: Interface de visualização Shiny.
-- `R/`: Funções utilitárias de suporte.
+## Arquitetura do Sistema
 
-## Protocolo Racial (Benchmark COVID)
-Para garantir comparabilidade, adotamos a agregação:
-- **Branco ou Amarelo** (1, 3)
-- **Preto ou Pardo** (2, 4)
-- **Indígena** (5)
+O sistema é dividido em três camadas:
 
-## Como utilizar
-1. **Ambiente:** O projeto utiliza `renv` para gerenciar dependências.
-2. **Setup:** Rode `source("main.R")` para executar o pipeline completo e subir o App.
-   O `main.R` orquestra: `01_ingest.R` -> `02_etl.R` -> `03_modules_gen.R` -> `app/app.R`
+1.  **Ingestão (`src/01_ingest.R`)**: Extração via `microdatasus` (SIM-DO). Otimizado para 18GB RAM.
+
+2.  **Transformação (`src/02_etl.R` e `src/03_modules_gen.R`)**: Padronização racial (Benchmark COVID: Branco/Amarelo, Preto/Pardo, Indígena), filtro de PEA e agregação em arquivos `gold/`.
+
+3.  **Apresentação (`app/app.R`)**: Dashboard interativo focado em dados tratados.
+
+## Protocolo Racial e de Gênero
+
+Todos os módulos (Trânsito, COVID, APS) seguem a norma institucional de agregação racial validada para garantir comparabilidade entre as causas de morte.
+
+## Como Executar
+
+1.  Instale o ambiente: `renv::restore()`
+2.  Ingestão/ETL: `source("main.R")`
+3.  Dashboard: `shiny::runApp("app/app.R")`
