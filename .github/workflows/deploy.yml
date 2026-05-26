@@ -35,6 +35,7 @@ jobs:
             token  = Sys.getenv("SHINYAPPS_TOKEN"),
             secret = Sys.getenv("SHINYAPPS_SECRET")
           )
+          rsconnect::deployApp(
             appDir = "app",
             appPrimaryDoc = "app.R",
             appName = "mortes_evitaveis_por_raca",
