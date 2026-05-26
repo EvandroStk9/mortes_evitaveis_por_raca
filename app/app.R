@@ -29,7 +29,9 @@ ui <- dashboardPage(
 server <- function(input, output) {
   render_plot <- function(file) {
     path <- here("data/gold", file)
-    req(file.exists(path), paste("Arquivo não encontrado:", file))
+    validate(
+      need(file.exists(path), paste("Arquivo não encontrado:", path))
+    )
     df <- read_parquet(path)
     
     p <- ggplot(df, aes(x = ano_trimestre, y = total, fill = raca_agreg,
