@@ -1,4 +1,13 @@
+library(here)
+library(rsconnect)
+
 source(here("src/01_ingest.R"))
 source(here("src/02_etl.R"))
 source(here("src/03_modules_gen.R"))
 shiny::runApp(here("app/app.R"))
+
+# Deploy no shinyapps.io
+rsconnect::deployApp(
+  appDir = here::here("app"), 
+  appName = "mortes_evitaveis_por_raca"
+  )
