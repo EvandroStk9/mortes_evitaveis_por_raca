@@ -27,7 +27,11 @@ df_staging <- df_raw %>%
       racacor == "Indígena" ~ "Indígena",
       TRUE ~ "Ignorado/NI"
     ),
-    sexo = as.factor(sexo)
+    sexo = case_when(
+      sexo %in% c("1", "M", "Masculino") ~ "Masculino",
+      sexo %in% c("2", "F", "Feminino") ~ "Feminino",
+      TRUE ~ "Não informado"
+    )
   )
 
 # Salva na camada staging

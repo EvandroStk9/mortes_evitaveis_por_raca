@@ -14,7 +14,7 @@ _targets.RData
 data/raw/
 data/staging/
 data/gold/
-*.parquet
+#*.parquet
 *.csv
 *.xlsx
 *.dbc

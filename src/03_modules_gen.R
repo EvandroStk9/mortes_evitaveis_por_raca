@@ -14,27 +14,37 @@ df_staging <- read_parquet(here("data/staging/full_sim.parquet"))
 run_metadata_engine <- function(yaml_file) {
   meta <- yaml::read_yaml(yaml_file)
   message("Gerando arquivo Gold para: ", meta$nome)
-  
-  # Filtro dinâmico
+
+  # Filtro dinâmico baseado no CID e ano de início
   df_filtered <- df_staging %>%
     filter(
-      str_detect(causabas, meta$metodologia$cid_regex) &
+      str_detect(causabas, meta$metodologia$cid_regex),
       ano >= meta$metodologia$filtros$ano_inicio 
-      )
-  
-  # Agregação dinâmica
-  agregacoes <- rlang::syms(meta$metodologia$agregacoes)
-  
+    )
+
+  # Garante que colunas essenciais para visualização (ano_trimestre, raca_agreg, sexo, causabas)
+  # estejam presentes na agregação para suportar filtros e gráficos temporais/demográficos.
+  colunas_obrigatorias <- c("ano_trimestre", "raca_agreg", "sexo", "causabas")
+  agregacoes_meta <- meta$metodologia$agregacoes %||% character(0)
+  agregacoes_finais <- unique(c(colunas_obrigatorias, agregacoes_meta))
+
+  agregacoes_syms <- rlang::syms(agregacoes_finais)
+
   df_agregado <- df_filtered %>%
-    group_by(!!!agregacoes) %>%
+    group_by(!!!agregacoes_syms) %>%
     summarise(total = n(), .groups = "drop")
-    
-  write_parquet(df_agregado, here(paste0("data/gold/", meta$id, "_gold.parquet")))
+
+  # Salva metadados junto com os dados ou garante o padrão de nome
+  output_path <- here(paste0("app/data/", meta$id, ".parquet"))
+  write_parquet(df_agregado, output_path)
+
+  message("  [OK] ", meta$id, " -> ", nrow(df_agregado), " linhas.")
 }
 
 # Execução
-dir.create(here("data/gold"), showWarnings = FALSE)
+dir.create(here("app/data/"), showWarnings = FALSE)
 yaml_files <- list.files(here("metadata"), "*.yaml", full.names = TRUE)
 walk(yaml_files, run_metadata_engine)
 
-message("Módulos Gold gerados com sucesso.")
+message("--- Módulos Gold gerados com sucesso ---")
+
