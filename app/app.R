@@ -49,7 +49,7 @@ death_module_server <- function(id, file_name) {
     
     # Carregamento de dados brutos do módulo
     raw_data <- reactive({
-      path <- here("app/data", file_name)
+      path <- file.path("data", file_name)
       req(file.exists(path))
       read_parquet(path)
     })
