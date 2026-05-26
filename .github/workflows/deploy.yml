@@ -13,7 +13,8 @@ jobs:
         with:
           use-public-rspm: true
           
-      # Correção: Lista de pacotes em uma única linha para evitar erro de interpretação
+      - uses: quarto-dev/quarto-actions/setup@v2
+          
       - name: Install system dependencies
         run: |
           sudo apt-get update
@@ -37,6 +38,5 @@ jobs:
           rsconnect::deployApp(
             appDir = ".",
             appName = "mortes-evitaveis-raca",
-            forceUpdate = TRUE,
-            appFiles = c("app", "data", "metadata", "main.R", ".Rprofile", "renv.lock")
+            forceUpdate = TRUE
           )
