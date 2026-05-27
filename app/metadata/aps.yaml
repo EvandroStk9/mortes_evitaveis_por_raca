@@ -4,7 +4,7 @@ conceito: "Mortes evitáveis por doenças sensíveis à Atenção Primária à S
 metodologia:
   cid_regex: "^[A|B|E|I|J]"
   filtros:
-    ano_inicio: 2000
+    ano_inicio: 2010
   agregacoes:
     - "ano_trimestre"
     - "raca_agreg"

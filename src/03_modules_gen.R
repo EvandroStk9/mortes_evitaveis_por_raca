@@ -22,9 +22,9 @@ run_metadata_engine <- function(yaml_file) {
       ano >= meta$metodologia$filtros$ano_inicio 
     )
 
-  # Garante que colunas essenciais para visualização (ano_trimestre, raca_agreg, sexo, causabas)
+  # Garante que colunas essenciais para visualização (ano, ano_trimestre, raca_agreg, sexo, causabas)
   # estejam presentes na agregação para suportar filtros e gráficos temporais/demográficos.
-  colunas_obrigatorias <- c("ano_trimestre", "raca_agreg", "sexo", "causabas")
+  colunas_obrigatorias <- c("ano", "ano_trimestre", "raca_agreg", "sexo", "causabas")
   agregacoes_meta <- meta$metodologia$agregacoes %||% character(0)
   agregacoes_finais <- unique(c(colunas_obrigatorias, agregacoes_meta))
 
@@ -43,7 +43,7 @@ run_metadata_engine <- function(yaml_file) {
 
 # Execução
 dir.create(here("app/data/"), showWarnings = FALSE)
-yaml_files <- list.files(here("app"/"metadata"), "*.yaml", full.names = TRUE)
+yaml_files <- list.files(here("app", "metadata"), "*.yaml", full.names = TRUE)
 walk(yaml_files, run_metadata_engine)
 
 message("--- Módulos Gold gerados com sucesso ---")

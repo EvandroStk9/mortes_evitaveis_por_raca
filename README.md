@@ -1,4 +1,4 @@
-# Observatório de Mortes Evitáveis por Raça/Cor
+# Monitoramento de Mortes Evitáveis por Raça/Cor
 
 Este projeto fornece uma infraestrutura analítica robusta para o monitoramento de desigualdades raciais em mortes evitáveis no Brasil. A plataforma utiliza uma abordagem orientada a metadados para gerar módulos de análise dinâmicos sobre diferentes causas de óbito.
 
